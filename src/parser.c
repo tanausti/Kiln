@@ -107,6 +107,7 @@ token_stack_node_t* token_stack(FILE* cF, int* lc){
 
 	token_stack_node_t* curr = (token_stack_node_t*)malloc(sizeof(token_stack_node_t));
 
+
 	curr->token = (token_t*)malloc(sizeof(token_t));
 	*(curr->token) = next_token(cF, lc);
 	curr->prev = NULL;
