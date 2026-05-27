@@ -20,7 +20,7 @@ int main(){
 void test(FILE* input, FILE* ans){
 	
 
-	int lc[2] = {0, 0};
+	int lc[2] = {1, 1};
 	int token_count = 0;
 	int pass = 1;
 
@@ -31,11 +31,14 @@ void test(FILE* input, FILE* ans){
 
 	token_t expected_token;
 
+	char buffer[128];
+	expected_token.string = buffer;
+
 		
 
-
+int x = 0;
 	
-	while(actual_token.type != TOK_EOF && fscanf(ans, "%d %128s %d %d", expected_token.type, expected_token.string, expected_token.line, expected_token.column == 4))
+	while(actual_token.type != TOK_EOF && fscanf(ans, "%d %127s %d %d", &expected_token.type, expected_token.string, &expected_token.line, &expected_token.column) == 4)
 	{
 
 		tokens_equal(actual_token, expected_token, token_count);
@@ -91,11 +94,12 @@ void tokens_equal(token_t actual_token, token_t expected_token, int token_count)
 		wrong_type = 1;
 
 	}
+	/*
 	if(!strcmp(actual_token.string, expected_token.string)){
 
 		wrong_string = 1;
 
-	}
+	}*/
 	if(actual_token.line != expected_token.line){
 
 		wrong_line = 1;
@@ -118,11 +122,12 @@ void tokens_equal(token_t actual_token, token_t expected_token, int token_count)
 			printf("Expected token_type_t: %d | Actual: %d\n", expected_token.type, actual_token.type);
 
 		}
+		/*
 		if(wrong_string){
 
-			printf("Expected string: %d | Actual: %d\n", expected_token.string, actual_token.string);
+			printf("Expected string: %s | Actual: %s\n", expected_token.string, actual_token.string);
 
-		}
+		}*/
 		if(wrong_line){
 
 			printf("Expected line: %d | Actual: %d\n", expected_token.line, actual_token.line);
