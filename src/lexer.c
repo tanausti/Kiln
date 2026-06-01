@@ -4,25 +4,26 @@
 #include <ctype.h>
 #include "lexer.h"
 
-#define MAX_TOKEN_LENGTH 10
+#define MAX_TOKEN_LENGTH 128
+
+
 
 
 token_t next_token(FILE *cF, int* lc){
 
-	int c = advance_char(cF, lc);
+	int c = -1;
 
-	int line = lc[0];
-	int column = lc[1];
-
-
-
-	while(isspace(c)){
+	do{
 
 		c = advance_char(cF, lc);
 
 	}
+	while(isspace(c));
 
 
+
+	int line = lc[0];
+	int column = lc[1];
 
 
 	switch(c){
@@ -77,6 +78,10 @@ token_t next_token(FILE *cF, int* lc){
 
 	}
 
+
+
+
+
 	if(c >= '0' && c <= '9'){
 
 		return create_constant_token(cF, c, lc);
@@ -96,6 +101,18 @@ token_t next_token(FILE *cF, int* lc){
 
 
 
+int look_ahead(FILE* cF){
+
+	int c = fgetc(cF);
+
+	ungetc(c, cF);
+
+	return c;
+
+}
+
+
+
 int advance_char(FILE *cF, int* lc){
 
 	int* line = lc;
@@ -103,21 +120,27 @@ int advance_char(FILE *cF, int* lc){
 
 	int c = fgetc(cF);
 
-	if(c == '\n'){
+	if(c == '\n' && look_ahead(cF) != EOF){
 
 		(*line)++;
-		*column = 1;
+		*column = 0;
+
 
 	}
-	if(c == '\t'){
+	else if(c == '\t'){
 
-		(*column) += 8;
+		(*column) += 7;
+	
+	}
+	else{
 
+		(*column)++;
 	}
 
 	return c;
 
 }
+
 
 
 int retreat_char(FILE *cF, int* lc, int* retreat_data){
@@ -147,22 +170,25 @@ int retreat_char(FILE *cF, int* lc, int* retreat_data){
 token_t create_constant_token(FILE *cF, char c, int* lc){
 
 	char constant[MAX_TOKEN_LENGTH] = "";
-	int prev_column;
+
+	int start_column = lc[1];
+	int prev_column = lc[1];
 
 	do{
-
-		prev_column = lc[1];
 
 		char addition_str[2] = {c, '\0'};
 		strcat(constant, addition_str);
 
 		c = advance_char(cF, lc);
 
+
+		prev_column = lc[1];
+
 	}
 	while(c >= '0' && c <= '9');
 
 
-	int retreat_data[2] = {c, prev_column};
+	int retreat_data[2] = {c, prev_column - 1};
 	c = retreat_char(cF, lc, retreat_data);
 
 
@@ -171,7 +197,7 @@ token_t create_constant_token(FILE *cF, char c, int* lc){
 
 	char* string = strdup(constant);
 
-	return (token_t){TOK_INT_LITERAL, string, line, column};
+	return (token_t){TOK_INT_LITERAL, string, line, start_column};
 
 
 
@@ -185,21 +211,23 @@ token_t create_keyword_or_identifier_token(FILE *cF, char c, int* lc){
 
 	char word[MAX_TOKEN_LENGTH] = "";
 
-	int prev_column;
+	int start_column = lc[1];
+	int prev_column = lc[1];
 
 	do{
 
-		prev_column = lc[1];
-
+	
 		char addition_str[2] = {c, '\0'};
 		strcat(word, addition_str);
 
 		c = advance_char(cF, lc);
 
+		prev_column = lc[1];
+
 	}
 	while(isalpha(c) || c == '_');
 
-	int retreat_data[2] = {c, prev_column};
+	int retreat_data[2] = {c, prev_column - 1};
 	c = retreat_char(cF, lc, retreat_data);
 
 
@@ -211,21 +239,21 @@ token_t create_keyword_or_identifier_token(FILE *cF, char c, int* lc){
 
 	if(strcmp(string, "int") == 0){
 
-		return (token_t){TOK_INT_TYPE, string, line, column};
+		return (token_t){TOK_INT_TYPE, string, line, start_column};
 
 
 	}
 	else if(strcmp(string, "return") == 0){
 
 
-		return (token_t){TOK_RETURN, string, line, column};
+		return (token_t){TOK_RETURN, string, line, start_column};
 
 
 	}
 	else{
 
 
-		return (token_t){TOK_IDENTIFIER, string, line, column};
+		return (token_t){TOK_IDENTIFIER, string, line, start_column};
 
 	}
 
