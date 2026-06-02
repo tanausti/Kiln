@@ -27,6 +27,9 @@ int main(){
 void test_lex(FILE* input, FILE* ans, int test_num){
 	
 
+	bool test_pass = true;
+
+
 	token_t current_actual_token;
 	current_actual_token.type = -1;
 
@@ -34,10 +37,9 @@ void test_lex(FILE* input, FILE* ans, int test_num){
 	char buffer[128];
 	current_expected_token = (token_t){-1, buffer, -1, -1};
 
-	bool test_pass = true;
 
-	test_pass = test_token_amount(input, ans, current_actual_token, current_expected_token);	
-	test_pass = test_all_tokens_equal(input, ans, current_actual_token, current_expected_token, test_num);
+	test_pass = test_pass & test_token_amount(input, ans, current_actual_token, current_expected_token);	
+	test_pass = test_pass & test_all_tokens_equal(input, ans, current_actual_token, current_expected_token, test_num);
 
 	output_expected_vs_actual_strings(input, ans, current_actual_token, current_expected_token);
 
