@@ -9,7 +9,7 @@
 
 
 
-token_t next_token(FILE *cF, int* lc){
+token_t next_token(FILE *cF, pos_t* lc){
 
 	int c = -1;
 
@@ -22,8 +22,8 @@ token_t next_token(FILE *cF, int* lc){
 
 
 
-	int line = lc[0];
-	int column = lc[1];
+	int line = lc->line;
+	int column = lc->column;
 
 
 	switch(c){
@@ -104,10 +104,10 @@ token_t next_token(FILE *cF, int* lc){
 
 
 
-int advance_char(FILE *cF, int* lc){
+int advance_char(FILE *cF, pos_t* lc){
 
-	int* line = lc;
-	int* column = lc + 1;
+	int* line = &(lc->line);
+	int* column = &(lc->column);
 
 	int c = fgetc(cF);
 
@@ -135,11 +135,11 @@ int advance_char(FILE *cF, int* lc){
 
 
 
-token_t create_constant_token(FILE *cF, char c, int* lc){
+token_t create_constant_token(FILE *cF, char c, pos_t* lc){
 
 	char constant[MAX_TOKEN_LENGTH] = "";
 
-	int constant_start_column = lc[1];
+	int constant_start_column = lc->column;
 
 
 	//read until end of constant string, append to constant
@@ -156,8 +156,7 @@ token_t create_constant_token(FILE *cF, char c, int* lc){
 	char addition_str[2] = {c, '\0'};
 	strcat(constant, addition_str);
 
-	int line = lc[0];
-	int column = lc[1];
+	int line = lc->line;
 
 	char* string = strdup(constant);
 
@@ -171,11 +170,11 @@ token_t create_constant_token(FILE *cF, char c, int* lc){
 
 
 
-token_t create_keyword_or_identifier_token(FILE *cF, char c, int* lc){
+token_t create_keyword_or_identifier_token(FILE *cF, char c, pos_t* lc){
 
 	char word[MAX_TOKEN_LENGTH] = "";
 
-	int word_start_column = lc[1];
+	int word_start_column = lc->column;
 
 
 	//read until end of word, append to word
@@ -195,8 +194,8 @@ token_t create_keyword_or_identifier_token(FILE *cF, char c, int* lc){
 	strcat(word, addition_str);
 
 
-	int line = lc[0];
-	int column = lc[1];
+	int line = lc->line;
+
 
 	char* string = strdup(word);
 

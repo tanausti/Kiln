@@ -2,10 +2,17 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
-#include "lexer_test.h"
 #include "../../src/lexer.h"
 
 
+
+bool test_lex(FILE* input, FILE* ans, int test_num);
+bool test_token_amount(FILE* input, FILE* ans, token_t current_actual_token, token_t current_expected_token);
+bool test_all_tokens_equal(FILE* input, FILE* ans, token_t current_actual_token, token_t current_expected_token, int test_num);
+bool tokens_equal(token_t current_actual_token, token_t current_expected_token, bool test_pass, int token_num, int test_num);
+int count_actual_tokens(FILE* input, token_t current_actual_token);
+int count_expected_tokens(FILE* ans, token_t current_expected_token);
+void output_expected_vs_actual_strings(FILE* input, FILE* ans, token_t current_actual_token, token_t current_expected_token);
 
 int main(){
 
@@ -29,6 +36,10 @@ int main(){
 bool test_lex(FILE* input, FILE* ans, int test_num){
 	
 
+	printf("---------\n");
+	printf("test_lex:\n");
+	printf("---------\n");
+
 	bool test_pass = true;
 
 
@@ -44,7 +55,14 @@ bool test_lex(FILE* input, FILE* ans, int test_num){
 	test_pass = test_pass & test_all_tokens_equal(input, ans, start_actual_token, start_expected_token, test_num);
 
 
-	if(!test_pass){
+	if(test_pass){
+
+
+		printf("Test %d passed!\n", test_num);
+
+	}
+	else{
+
 		output_expected_vs_actual_strings(input, ans, start_actual_token, start_expected_token);
 	}
 
@@ -93,14 +111,14 @@ bool test_all_tokens_equal(FILE* input, FILE* ans, token_t current_actual_token,
 	bool test_pass = true;
 
 	int token_num = 0;
-	int lc[2] = {1, 0};
+	pos_t lc = {1, 0};
 
 	while(current_actual_token.type != TOK_EOF && fscanf(ans, "%d %127s %d %d", &current_expected_token.type, current_expected_token.string, &current_expected_token.line, &current_expected_token.column))
 	{
 
 		token_num++;
 
-		current_actual_token = next_token(input, lc);
+		current_actual_token = next_token(input, &lc);
 		test_pass = test_pass & tokens_equal(current_actual_token, current_expected_token, test_pass, token_num, test_num);
 
 	}
@@ -208,12 +226,12 @@ int count_actual_tokens(FILE* input, token_t current_actual_token){
 
 	int count = 0;
 	
-	int lc[2] = {1,0};
+	pos_t lc = {1,0};
 
 	while(current_actual_token.type != TOK_EOF)
 	{
 
-		current_actual_token = next_token(input, lc);
+		current_actual_token = next_token(input, &lc);
 
 		count++;
 
@@ -251,7 +269,7 @@ void output_expected_vs_actual_strings(FILE* input, FILE* ans, token_t current_a
 
 
 	int token_num = 0;
-	int lc[2] = {1, 0};
+	pos_t lc = {1, 0};
 
 	printf("\n");
 	printf("ALL TOKEN STRING VALUES: \n");
@@ -262,7 +280,7 @@ void output_expected_vs_actual_strings(FILE* input, FILE* ans, token_t current_a
 
 		token_num++;
 
-		current_actual_token = next_token(input, lc);
+		current_actual_token = next_token(input, &lc);
 
 		printf("Token %d | Expected: %s | Actual: %s \n", token_num, current_expected_token.string, current_actual_token.string);
 

@@ -44,15 +44,15 @@ typedef struct pos{
 	int column;
 
 
-}pos;
+}pos_t;
 
 
 
-token_t next_token(FILE* cF, int* lc);
-int advance_char(FILE *cF, int* lc);
+token_t next_token(FILE* cF, pos_t* lc);
+int advance_char(FILE *cF, pos_t* lc);
 int look_ahead(FILE *cF);
-token_t create_constant_token(FILE* cF, char c, int* lc);
-token_t create_keyword_or_identifier_token(FILE* cF, char c, int* lc);
+token_t create_constant_token(FILE* cF, char c, pos_t* lc);
+token_t create_keyword_or_identifier_token(FILE* cF, char c, pos_t* lc);
 
 
 
