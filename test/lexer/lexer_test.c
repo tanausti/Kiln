@@ -2,52 +2,54 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdbool.h>
+#include "lexer_test.h"
 #include "../../src/lexer.h"
 
 
-void test_lex(FILE* input, FILE* ans, int test_num);
-bool test_token_amount(FILE* input, FILE* ans, token_t current_actual_token, token_t current_expected_token);
-bool test_all_tokens_equal(FILE* input, FILE* ans, token_t current_actual_token, token_t current_expected_token, int test_num);
-bool tokens_equal(token_t current_actual_token, token_t current_expected_token, bool test_pass, int token_num, int test_num);
-int count_actual_tokens(FILE* input, token_t current_actual_token);
-int count_expected_tokens(FILE* ans, token_t current_expected_token);
-void output_expected_vs_actual_strings(FILE* input, FILE* ans, token_t current_actual_token, token_t current_expected_token);
 
 int main(){
+
+
+	bool all_pass = true;
 
 	FILE* input1 = fopen("input1.c", "r");
 	FILE* ans1 = fopen("ans1.txt", "r");
 
-	test_lex(input1, ans1, 1);
+	all_pass = all_pass & test_lex(input1, ans1, 1);
+
+	fclose(input1);
+	fclose(ans1);
+
+	return (int) all_pass;
 
 }
 
 
 
-void test_lex(FILE* input, FILE* ans, int test_num){
+bool test_lex(FILE* input, FILE* ans, int test_num){
 	
 
 	bool test_pass = true;
 
 
-	token_t current_actual_token;
-	current_actual_token.type = -1;
+	token_t start_actual_token;
+	start_actual_token.type = -1;
 
-	token_t current_expected_token;
+	token_t start_expected_token;
 	char buffer[128];
-	current_expected_token = (token_t){-1, buffer, -1, -1};
+	start_expected_token = (token_t){-1, buffer, -1, -1};
 
 
-	test_pass = test_pass & test_token_amount(input, ans, current_actual_token, current_expected_token);	
-	test_pass = test_pass & test_all_tokens_equal(input, ans, current_actual_token, current_expected_token, test_num);
-
-	output_expected_vs_actual_strings(input, ans, current_actual_token, current_expected_token);
+	test_pass = test_pass & test_token_amount(input, ans, start_actual_token, start_expected_token);	
+	test_pass = test_pass & test_all_tokens_equal(input, ans, start_actual_token, start_expected_token, test_num);
 
 
-	fclose(input);
-	fclose(ans);
+	if(!test_pass){
+		output_expected_vs_actual_strings(input, ans, start_actual_token, start_expected_token);
+	}
 
 
+	return test_pass;
 
 }
 
@@ -55,6 +57,7 @@ void test_lex(FILE* input, FILE* ans, int test_num){
 bool test_token_amount(FILE* input, FILE* ans, token_t current_actual_token, token_t current_expected_token){
 
 
+	bool test_pass = true;
 
 	int current_actual_token_count = count_actual_tokens(input, current_actual_token);
 	int current_expected_token_count = count_expected_tokens(ans, current_expected_token);
@@ -64,6 +67,7 @@ bool test_token_amount(FILE* input, FILE* ans, token_t current_actual_token, tok
 
 
 		printf("Test failed! Actual number of tokens (%d) less than expected (%d).\n", current_actual_token_count, current_expected_token_count);
+		test_pass = false;
 
 
 	}
@@ -71,6 +75,7 @@ bool test_token_amount(FILE* input, FILE* ans, token_t current_actual_token, tok
 
 
 		printf("Test failed! Actual number of tokens (%d) greated than expected (%d).\n", current_actual_token_count, current_expected_token_count);
+		test_pass = false;
 
 
 	}
@@ -79,7 +84,7 @@ bool test_token_amount(FILE* input, FILE* ans, token_t current_actual_token, tok
 	rewind(input);
 
 
-
+	return test_pass;
 
 }
 
@@ -113,32 +118,33 @@ bool test_all_tokens_equal(FILE* input, FILE* ans, token_t current_actual_token,
 bool tokens_equal(token_t current_actual_token, token_t current_expected_token, bool test_pass, int token_num, int test_num){
 
 
+	//Do not set test_pass to false. It must be passed in as is.
 
-	int wrong_type = 0;
-	int wrong_string = 0;
-	int wrong_line = 0;
-	int wrong_column = 0;
+	bool wrong_type = false;
+	bool wrong_string = false;
+	bool wrong_line = false;
+	bool wrong_column = false;
 
 
 
 	if(current_actual_token.type != current_expected_token.type){
 
-		wrong_type = 1;
+		wrong_type = true;
 
 	}
 	if(strcmp(current_actual_token.string, current_expected_token.string)){
 
-		wrong_string = 1;
+		wrong_string = true;
 
 	}
 	if(current_actual_token.line != current_expected_token.line){
 
-		wrong_line = 1;
+		wrong_line = true;
 
 	}
 	if(current_actual_token.column != current_expected_token.column){
 
-		wrong_column = 1;
+		wrong_column = true;
 
 	}
 

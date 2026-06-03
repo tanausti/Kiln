@@ -185,6 +185,7 @@ typedef struct ast_node{
 
 
 token_stack_node_t* token_stack(FILE* cF, int* lc);
+ast_node_t build_ast(FILE* cF);
 
 void print_ast(ast_node_t ast);
 void print_primary(primary_t primary);

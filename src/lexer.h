@@ -38,10 +38,19 @@ typedef struct token{
 }token_t;
 
 
+typedef struct pos{
+
+	int line;
+	int column;
+
+
+}pos;
+
+
 
 token_t next_token(FILE* cF, int* lc);
 int advance_char(FILE *cF, int* lc);
-int retreat_char(FILE *cF, int* lc, int* retreat_data);
+int look_ahead(FILE *cF);
 token_t create_constant_token(FILE* cF, char c, int* lc);
 token_t create_keyword_or_identifier_token(FILE* cF, char c, int* lc);
 

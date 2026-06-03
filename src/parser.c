@@ -73,6 +73,10 @@ vector_tree_t init_vector_tree(){
 
 
 
+
+
+
+
 void vec_node_add_right_child(vector_tree_t* parent_tree, ast_node_t child){
 
 
@@ -136,6 +140,20 @@ token_stack_node_t* token_stack(FILE* cF, int* lc){
 
 }
 
+
+
+ast_node_t build_ast(FILE* cF){
+
+	int lc[2] = {0,1};
+
+	token_stack_node** curr = token_stack(cF, lc);
+
+	ast_node_t ast = application(curr);
+
+	return ast;
+
+
+}
 
 
 ast_node_t application(token_stack_node_t** curr){
