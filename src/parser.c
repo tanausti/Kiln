@@ -12,16 +12,6 @@
 #define DEFAULT_NODE_CAPACITY 10000
 
 
-int main(){
-
-
-
-return 0;
-
-
-
-}
-
 ast_node_t build_ast(FILE* cF){
 
 	pos_t lc = {0,1};
