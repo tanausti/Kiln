@@ -4,15 +4,8 @@
 #include <stdio.h>
 #include <ctype.h>
 #include "lexer.h"
+#include "token_stack.h"
 
-
-typedef struct token_stack_node{
-
-	token_t* token;
-	struct token_stack_node* prev;
-	struct token_stack_node* next;
-
-}token_stack_node_t;
 
 
 typedef struct ast_node ast_node_t;
@@ -184,11 +177,7 @@ typedef struct ast_node{
 
 
 
-token_stack_node_t* token_stack(FILE* cF, int* lc);
 ast_node_t build_ast(FILE* cF);
-
-void print_ast(ast_node_t ast);
-void print_primary(primary_t primary);
 
 
 
@@ -203,8 +192,7 @@ vector_tree_t init_vector_tree();
 
 
 
-void vec_node_add_right_child(vector_tree_t* parent, ast_node_t child);
-
+void vec_tree_add_right_child(vector_tree_t* parent_tree, ast_node_t child);
 
 
 
@@ -228,8 +216,6 @@ int str_to_int(char* str);
 int match_token(token_stack_node_t** curr, int n, ...);
 int check_token(token_stack_node_t* curr, token_type_t type);
 
-token_stack_node_t* pop_token(token_stack_node_t** curr);
-token_stack_node_t* peek_token(token_stack_node_t* curr);
 
 
 #endif

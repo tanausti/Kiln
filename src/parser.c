@@ -5,155 +5,37 @@
 #include <string.h>
 #include <errno.h>
 #include "lexer.h"
+#include "token_stack.h"
+#include "print_ast.h"
 #include "parser.h"
 
 #define DEFAULT_NODE_CAPACITY 10000
 
 
-
-
-ast_node_t init_keyword_node(){
-
-	ast_node_t ast_node;
-	ast_node.type = AST_KEYWORD;
-	return ast_node;
-
-}
-ast_node_t init_primary_node(){
-
-	ast_node_t ast_node;
-	ast_node.type = AST_PRIMARY;
-	return ast_node;
-}
-ast_node_t init_function_list_node(){
-
-	ast_node_t ast_node;
-	ast_node.type = AST_FUNCTION_LIST;
-	return ast_node;
-
-}
-ast_node_t init_function_node(){
-
-	ast_node_t ast_node;
-	ast_node.type = AST_FUNCTION;
-	return ast_node;
-
-}
-ast_node_t init_statement_list_node(){
-
-	ast_node_t ast_node;
-	ast_node.type = AST_STATEMENT_LIST;
-	return ast_node;
-
-}
-ast_node_t init_statement_node(){
-
-	ast_node_t ast_node;
-	ast_node.type = AST_STATEMENT;
-	return ast_node;
-
-}
-ast_node_t init_binary_expression_node(){
-
-	ast_node_t ast_node;
-	ast_node.type = AST_BINARY_EXPRESSION;
-	return ast_node;
-
-}
-vector_tree_t init_vector_tree(){
-
-	vector_tree_t vector_tree;
-	vector_tree.size = 0;
-	vector_tree.capacity = DEFAULT_NODE_CAPACITY;
-	vector_tree.children = malloc(sizeof(ast_node_t*));
-
-	return vector_tree;
-
-}
+int main(){
 
 
 
+return 0;
 
-
-
-
-void vec_node_add_right_child(vector_tree_t* parent_tree, ast_node_t child){
-
-
-	ast_node_t* childPtr = malloc(sizeof(child));
-	*childPtr = child;
-
-	if(parent_tree->children != NULL && parent_tree->size <= parent_tree->capacity){
-
-		ast_node_t** vec = parent_tree->children;
-
-		vec = realloc(vec, ++(parent_tree->size) * sizeof(ast_node_t*));
-
-		parent_tree->children = vec;
-
-		const int size = parent_tree->size;
-
-		memcpy(vec + (size - 1), &childPtr, sizeof(ast_node_t*));
-
-
-	}else{
-
-		puts("not initialized properly");
-
-	}
 
 
 }
-
-
-token_stack_node_t* token_stack(FILE* cF, int* lc){
-
-
-	token_stack_node_t* curr = (token_stack_node_t*)malloc(sizeof(token_stack_node_t));
-
-
-	curr->token = (token_t*)malloc(sizeof(token_t));
-	*(curr->token) = next_token(cF, lc);
-	curr->prev = NULL;
-
-	token_stack_node_t* head = curr;
-
-	while(curr->token->type != TOK_EOF){
-
-		token_stack_node_t* temp_prev = curr;
-
-		curr->next = (token_stack_node_t*)malloc(sizeof(token_stack_node_t));
-
-		curr = curr->next;
-		curr->token = (token_t*)malloc(sizeof(token_t));
-		*(curr->token) = next_token(cF, lc);
-
-		curr->prev = temp_prev;
-
-
-	}
-
-
-
-	return head;
-
-
-}
-
-
 
 ast_node_t build_ast(FILE* cF){
 
-	int lc[2] = {0,1};
+	pos_t lc = {0,1};
 
-	token_stack_node** curr = token_stack(cF, lc);
+	token_stack_node_t* top_node = token_stack(cF, &lc);
 
-	ast_node_t ast = application(curr);
+	ast_node_t ast = application(&top_node);
 
 	return ast;
 
 
 }
+
+
 
 
 ast_node_t application(token_stack_node_t** curr){
@@ -178,7 +60,7 @@ ast_node_t function_list(token_stack_node_t** curr){
 
 		ast_node_t function_node = function(curr);
 
-		vec_node_add_right_child(&function_list_node.as.function_list.vector_tree, function_node);
+		vec_tree_add_right_child(&function_list_node.as.function_list.vector_tree, function_node);
 
 	}
 
@@ -248,13 +130,13 @@ ast_node_t statement_list(token_stack_node_t** curr){
 	if(!match_token(curr, 1, TOK_RBRACE)){
 
 		ast_node_t statement_var = statement(curr);
-		vec_node_add_right_child(&statement_list_node.as.statement_list.vector_tree, statement_var);
+		vec_tree_add_right_child(&statement_list_node.as.statement_list.vector_tree, statement_var);
 
 		while(match_token(curr, 1, TOK_SEMI) && !match_token(curr, 1, TOK_RBRACE)){
 
 			statement_var = statement(curr);
 
-			vec_node_add_right_child(&statement_list_node.as.statement_list.vector_tree, statement_var);
+			vec_tree_add_right_child(&statement_list_node.as.statement_list.vector_tree, statement_var);
 
 		}
 
@@ -288,13 +170,13 @@ ast_node_t statement(token_stack_node_t** curr){
 
 		}
 
-		vec_node_add_right_child(&statement_node.as.statement.vector_tree, keyword_node);
+		vec_tree_add_right_child(&statement_node.as.statement.vector_tree, keyword_node);
 
 	}
 
 	ast_node_t expression_var = expression(curr);
 
-	vec_node_add_right_child(&statement_node.as.statement.vector_tree, expression_var);
+	vec_tree_add_right_child(&statement_node.as.statement.vector_tree, expression_var);
 
 	return statement_node;
 
@@ -427,26 +309,6 @@ ast_node_t primary(token_stack_node_t** curr){
 
 
 
-int str_to_int(char* str){
-
-
-	char* end;
-	errno = 0;
-	long v = strtol(str, &end, 10);
-	int literal_value = (int)v;
-
-	char first_digit = str[0];
-
-	if(literal_value == 0 && first_digit != '0'){
-
-		fprintf(stderr, "unaccounted token: %c\n", first_digit);
-
-	}
-
-	return literal_value;
-
-
-}
 
 
 
@@ -499,20 +361,128 @@ int check_token(token_stack_node_t* curr, token_type_t type){
 }
 
 
-token_stack_node_t* pop_token(token_stack_node_t** curr){
 
-	token_stack_node_t* node = *curr;
-	*curr = peek_token(*curr);
 
-	return node;
+void vec_tree_add_right_child(vector_tree_t* parent_tree, ast_node_t child){
+
+
+	ast_node_t* childPtr = malloc(sizeof(child));
+	*childPtr = child;
+
+	if(parent_tree->children != NULL && parent_tree->size <= parent_tree->capacity){
+
+		ast_node_t** vec = parent_tree->children;
+
+		vec = realloc(vec, ++(parent_tree->size) * sizeof(ast_node_t*));
+
+		parent_tree->children = vec;
+
+		const int size = parent_tree->size;
+
+		memcpy(vec + (size - 1), &childPtr, sizeof(ast_node_t*));
+
+
+	}else{
+
+		printf("not initialized properly\n");
+
+	}
+
 
 }
 
 
 
-token_stack_node_t* peek_token(token_stack_node_t* curr){
 
-	return curr->next;
+int str_to_int(char* str){
+
+
+	char* end;
+	errno = 0;
+	long v = strtol(str, &end, 10);
+	int literal_value = (int)v;
+
+	char first_digit = str[0];
+
+	if(literal_value == 0 && first_digit != '0'){
+
+		fprintf(stderr, "unaccounted token: %c\n", first_digit);
+
+	}
+
+	return literal_value;
 
 
 }
+
+
+
+
+
+
+
+
+
+
+ast_node_t init_keyword_node(){
+
+	ast_node_t ast_node;
+	ast_node.type = AST_KEYWORD;
+	return ast_node;
+
+}
+ast_node_t init_primary_node(){
+
+	ast_node_t ast_node;
+	ast_node.type = AST_PRIMARY;
+	return ast_node;
+}
+ast_node_t init_function_list_node(){
+
+	ast_node_t ast_node;
+	ast_node.type = AST_FUNCTION_LIST;
+	return ast_node;
+
+}
+ast_node_t init_function_node(){
+
+	ast_node_t ast_node;
+	ast_node.type = AST_FUNCTION;
+	return ast_node;
+
+}
+ast_node_t init_statement_list_node(){
+
+	ast_node_t ast_node;
+	ast_node.type = AST_STATEMENT_LIST;
+	return ast_node;
+
+}
+ast_node_t init_statement_node(){
+
+	ast_node_t ast_node;
+	ast_node.type = AST_STATEMENT;
+	return ast_node;
+
+}
+ast_node_t init_binary_expression_node(){
+
+	ast_node_t ast_node;
+	ast_node.type = AST_BINARY_EXPRESSION;
+	return ast_node;
+
+}
+vector_tree_t init_vector_tree(){
+
+	vector_tree_t vector_tree;
+	vector_tree.size = 0;
+	vector_tree.capacity = DEFAULT_NODE_CAPACITY;
+	vector_tree.children = malloc(sizeof(ast_node_t*));
+
+	return vector_tree;
+
+}
+
+
+
+
