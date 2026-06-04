@@ -6,6 +6,8 @@
 
 void print_ast(ast_node_t ast);
 
+void print_program_node(program_t program);
+void print_function_list(function_list_t function_list);
 void print_function_node(function_t function);
 void print_function_prototype(function_prototype_t function_prototype);
 void print_statement_list(statement_list_t statement_list);

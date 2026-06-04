@@ -18,7 +18,7 @@ ast_node_t build_ast(FILE* cF){
 
 	token_stack_node_t* top_node = token_stack(cF, &lc);
 
-	ast_node_t ast = application(&top_node);
+	ast_node_t ast = program(&top_node);
 
 	return ast;
 
@@ -28,9 +28,13 @@ ast_node_t build_ast(FILE* cF){
 
 
 
-ast_node_t application(token_stack_node_t** curr){
+ast_node_t program(token_stack_node_t** curr){
 
-	return function_list(curr);
+
+	ast_node_t program_node = init_program_node();
+	program_node.as.program.function_list = function_list(curr);
+
+	return program_node;
 
 
 }
@@ -38,10 +42,10 @@ ast_node_t application(token_stack_node_t** curr){
 
 
 
-ast_node_t function_list(token_stack_node_t** curr){
+function_list_t function_list(token_stack_node_t** curr){
 
-	ast_node_t function_list_node = init_function_list_node();
-	function_list_node.as.function_list.vector_tree = init_vector_tree();
+	function_list_t function_list;
+	function_list.vector_tree = init_vector_tree();
 
 	while(match_token(curr, 1, TOK_INT_TYPE) && 
 			match_token(curr, 1, TOK_IDENTIFIER) && 
@@ -50,11 +54,11 @@ ast_node_t function_list(token_stack_node_t** curr){
 
 		ast_node_t function_node = function(curr);
 
-		vec_tree_add_right_child(&function_list_node.as.function_list.vector_tree, function_node);
+		vec_tree_add_right_child(&function_list.vector_tree, function_node);
 
 	}
 
-	return function_list_node;
+	return function_list;
 
 }
 
@@ -66,9 +70,7 @@ ast_node_t function(token_stack_node_t** curr){
 
 	function_node.as.function.function_prototype = function_prototype(curr);
 
-	ast_node_t statement_list_node = statement_list(curr);
-
-	function_node.as.function.statement_list = statement_list_node.as.statement_list;
+	function_node.as.function.statement_list = statement_list(curr);
 
 	return function_node;
 
@@ -112,27 +114,27 @@ function_prototype_t function_prototype(token_stack_node_t** curr){
 }
 
 
-ast_node_t statement_list(token_stack_node_t** curr){
+statement_list_t statement_list(token_stack_node_t** curr){
 
-	ast_node_t statement_list_node = init_statement_list_node();	
-	statement_list_node.as.statement_list.vector_tree = init_vector_tree();
+	statement_list_t statement_list;
+	statement_list.vector_tree = init_vector_tree();
 
 	if(!match_token(curr, 1, TOK_RBRACE)){
 
 		ast_node_t statement_var = statement(curr);
-		vec_tree_add_right_child(&statement_list_node.as.statement_list.vector_tree, statement_var);
+		vec_tree_add_right_child(&statement_list.vector_tree, statement_var);
 
 		while(match_token(curr, 1, TOK_SEMI) && !match_token(curr, 1, TOK_RBRACE)){
 
 			statement_var = statement(curr);
 
-			vec_tree_add_right_child(&statement_list_node.as.statement_list.vector_tree, statement_var);
+			vec_tree_add_right_child(&statement_list.vector_tree, statement_var);
 
 		}
 
 	}
 
-	return statement_list_node;
+	return statement_list;
 
 
 
@@ -171,6 +173,7 @@ ast_node_t statement(token_stack_node_t** curr){
 	return statement_node;
 
 }
+
 
 
 
@@ -412,8 +415,13 @@ int str_to_int(char* str){
 
 
 
+ast_node_t init_program_node(){
 
+	ast_node_t ast_node;
+	ast_node.type = AST_PROGRAM;
+	return ast_node;
 
+}
 ast_node_t init_keyword_node(){
 
 	ast_node_t ast_node;
@@ -427,24 +435,10 @@ ast_node_t init_primary_node(){
 	ast_node.type = AST_PRIMARY;
 	return ast_node;
 }
-ast_node_t init_function_list_node(){
-
-	ast_node_t ast_node;
-	ast_node.type = AST_FUNCTION_LIST;
-	return ast_node;
-
-}
 ast_node_t init_function_node(){
 
 	ast_node_t ast_node;
 	ast_node.type = AST_FUNCTION;
-	return ast_node;
-
-}
-ast_node_t init_statement_list_node(){
-
-	ast_node_t ast_node;
-	ast_node.type = AST_STATEMENT_LIST;
 	return ast_node;
 
 }
@@ -462,6 +456,7 @@ ast_node_t init_binary_expression_node(){
 	return ast_node;
 
 }
+
 vector_tree_t init_vector_tree(){
 
 	vector_tree_t vector_tree;

@@ -7,12 +7,9 @@ void print_ast(ast_node_t ast){
 	
 	switch(ast.type){
 
-		case AST_FUNCTION_LIST:
+		case AST_PROGRAM:
 			{
-				printf("(Function List (temp):\n)");
-				for(int i = 0; i < ast.as.function_list.vector_tree.size; i++){
-					print_ast(*ast.as.function_list.vector_tree.children[i]);
-				}
+				print_program_node(ast.as.program);
 				break;
 			}
 		case AST_FUNCTION:
@@ -45,6 +42,24 @@ void print_ast(ast_node_t ast){
 			}
 
 	}	
+
+}
+
+
+void print_program_node(program_t program){
+
+	print_function_list(program.function_list);
+
+
+}
+
+void print_function_list(function_list_t function_list){
+
+
+	for(int i = 0; i < function_list.vector_tree.size; i++){
+		print_ast(*function_list.vector_tree.children[i]);
+	}
+
 
 }
 

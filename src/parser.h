@@ -137,9 +137,9 @@ typedef struct binary_expression{
 typedef enum ast_node_type{
 
 
+	AST_PROGRAM,
 	AST_FUNCTION_LIST,
 	AST_FUNCTION,
-	AST_STATEMENT_LIST,
 	AST_STATEMENT,
 	AST_BINARY_EXPRESSION,	
 	AST_KEYWORD,
@@ -147,6 +147,13 @@ typedef enum ast_node_type{
 
 
 }ast_node_type_t;
+
+typedef struct program{
+
+	function_list_t function_list;
+
+
+}program_t;
 
 
 typedef struct ast_node{
@@ -156,7 +163,7 @@ typedef struct ast_node{
 
 	union{
 
-		function_list_t function_list;
+		program_t program;
 
 		function_t function;
 
@@ -181,11 +188,10 @@ ast_node_t build_ast(FILE* cF);
 
 
 
+ast_node_t init_program_node();
 ast_node_t init_keyword_node();
 ast_node_t init_primary_node();
-ast_node_t init_function_list_node();
 ast_node_t init_function_node();
-ast_node_t init_statement_list_node();
 ast_node_t init_statement_node();
 ast_node_t init_binary_expression_node();
 vector_tree_t init_vector_tree();
@@ -196,11 +202,11 @@ void vec_tree_add_right_child(vector_tree_t* parent_tree, ast_node_t child);
 
 
 
-ast_node_t application(token_stack_node_t** curr);
-ast_node_t function_list(token_stack_node_t** curr);
+ast_node_t program(token_stack_node_t** curr);
+function_list_t function_list(token_stack_node_t** curr);
 ast_node_t function(token_stack_node_t** curr);
 function_prototype_t function_prototype(token_stack_node_t** curr);
-ast_node_t statement_list(token_stack_node_t** curr);
+statement_list_t statement_list(token_stack_node_t** curr);
 ast_node_t statement(token_stack_node_t** curr);
 ast_node_t expression(token_stack_node_t** curr);
 primitive_type_t get_primitive_type();
