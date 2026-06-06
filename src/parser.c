@@ -219,7 +219,7 @@ ast_node_t term(token_stack_node_t** curr){
 
 		ast_node_t new_left;
 
-		primitive_type_t primitive_type = get_primitive_type();
+		primitive_type_t primitive_type = PRIMITIVE_INT;
 
 		new_left.as.binary_expression = (binary_expression_t){leftPtr, operator, rightPtr, primitive_type};
 		new_left.type = AST_BINARY_EXPRESSION;
@@ -232,14 +232,6 @@ ast_node_t term(token_stack_node_t** curr){
 
 
 }
-
-
-primitive_type_t get_primitive_type(){
-
-	return PRIMITIVE_INT;
-
-}
-
 
 
 
@@ -269,7 +261,7 @@ ast_node_t primary(token_stack_node_t** curr){
 				(peek_token(peek_token(*curr))->token->type) == TOK_RPARENTH){
 
 			ast.as.primary.type = PRIMARY_FUNC_CALL;
-			ast.as.primary.as.func_call = (func_call_t){get_primitive_type(), (*curr)->token->string};
+			ast.as.primary.as.func_call = (func_call_t){PRIMITIVE_INT, (*curr)->token->string};
 			pop_token(curr);
 			pop_token(curr);
 
@@ -288,6 +280,8 @@ ast_node_t primary(token_stack_node_t** curr){
 		char* primary_str = (*curr)->token->string;
 		int value = str_to_int(primary_str);
 
+
+		ast.as.primary.as.literal.primitive_type = PRIMITIVE_INT;
 		ast.as.primary.as.literal.as.integer = value;
 
 
