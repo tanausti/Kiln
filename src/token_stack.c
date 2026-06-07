@@ -4,6 +4,9 @@
 #include "token_stack.h"
 
 
+
+//TODO: free tokens after popped
+
 token_stack_node_t* token_stack(FILE* cF, pos_t* lc){
 
 

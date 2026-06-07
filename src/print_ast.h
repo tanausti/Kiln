@@ -4,21 +4,21 @@
 #include "parser.h"
 
 
-void print_ast(ast_node_t ast);
+void ast_to_str(ast_node_t ast);
 
 void indent(int indent_level);
 
-void print_program_node(program_t program, int indent_level);
-void print_function_list(function_list_t function_list, int indent_level);
-void print_function_node(function_t function, int indent_level);
-void print_function_prototype(function_prototype_t function_prototype, int indent_level);
-void print_statement_list(statement_list_t statement_list, int indent_level);
-void print_statement_node(statement_t statement, int indent_level);
-void print_binary_expression_node(binary_expression_t binary_expression, int indent_level);
-void print_keyword_node(keyword_t keyword, int indent_level);
-void print_primary_node(primary_t primary, int indent_level);
-void print_literal(literal_t literal, int indent_level);
-void print_func_call(func_call_t func_call, int indent_level);
+void program_node_to_str(program_t program, int indent_level);
+void function_list_to_str(function_list_t function_list, int indent_level);
+void function_node_to_str(function_t function, int indent_level);
+void function_prototype_to_str(function_prototype_t function_prototype, int indent_level);
+void statement_list_to_str(statement_list_t statement_list, int indent_level);
+void statement_node_to_str(statement_t statement, int indent_level);
+void binary_expression_node_to_str(binary_expression_t binary_expression, int indent_level);
+void keyword_node_to_str(keyword_t keyword, int indent_level);
+void primary_node_to_str(primary_t primary, int indent_level);
+void literal_to_str(literal_t literal, int indent_level);
+void func_call_to_str(func_call_t func_call, int indent_level);
 
 
 
