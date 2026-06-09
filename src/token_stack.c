@@ -57,3 +57,23 @@ token_stack_node_t* peek_token(token_stack_node_t* curr){
 
 
 }
+
+
+
+
+void free_tokens(token_stack_node_t* top){
+
+
+	free(top->token->string);
+	free(top->token);
+
+	if(top->prev != NULL){
+		free_tokens(top->prev);	
+	}
+
+	free(top);
+
+
+
+
+}

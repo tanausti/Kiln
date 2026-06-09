@@ -20,6 +20,8 @@ ast_node_t build_ast(FILE* cF){
 
 	ast_node_t ast = program(&top_node);
 
+	free_tokens(top_node);
+
 	return ast;
 
 
@@ -100,6 +102,9 @@ function_prototype_t function_prototype(token_stack_node_t** curr){
 		case 'i':
 			primitive_type = PRIMITIVE_INT;
 			break;
+		default:
+			primitive_type = -1;
+			break;
 	}
 
 
@@ -158,6 +163,9 @@ ast_node_t statement(token_stack_node_t** curr){
 				break;
 			case TOK_INT_TYPE:
 				keyword_node.as.keyword = KEYW_INT;
+				break;
+			default:
+				keyword_node.as.keyword = -1;
 				break;
 
 		}
@@ -218,11 +226,8 @@ ast_node_t term(token_stack_node_t** curr){
 		*rightPtr = right;
 
 		ast_node_t new_left;
-
-		primitive_type_t primitive_type = PRIMITIVE_INT;
-
-		new_left.as.binary_expression = (binary_expression_t){leftPtr, operator, rightPtr, primitive_type};
-		new_left.type = AST_BINARY_EXPRESSION;
+		new_left = init_binary_expression_node();
+		new_left.as.binary_expression = (binary_expression_t){leftPtr, operator, rightPtr, PRIMITIVE_INT};
 		left = new_left;
 
 	}
@@ -260,7 +265,7 @@ ast_node_t primary(token_stack_node_t** curr){
 		if(peek_token(*curr)->token->type == TOK_LPARENTH && 
 				(peek_token(peek_token(*curr))->token->type) == TOK_RPARENTH){
 
-			ast.as.primary.type = PRIMARY_FUNC_CALL;
+			ast = init_primary_node();
 			ast.as.primary.as.func_call = (func_call_t){PRIMITIVE_INT, (*curr)->token->string};
 			pop_token(curr);
 			pop_token(curr);
