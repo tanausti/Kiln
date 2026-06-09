@@ -1,3 +1,6 @@
+#include "../../src/parser.h"
+#include "../../src/print_ast.h"
+
 #include "parser_test.h"
 #include <stdlib.h>
 #include <string.h>
@@ -8,8 +11,9 @@
 int main(){
 
 	
-	FILE* input1 = fopen("input1.txt", "r");
+	FILE* input1 = fopen("input1.c", "r");
 	FILE* ans1 = fopen("ans1.txt", "r");
+
 	test_ast(input1, ans1, 1);
 
 
@@ -19,25 +23,50 @@ int main(){
 }
 
 
+FILE* get_stream(FILE* input){
 
+
+	char* buffer = NULL;
+	size_t size = 0;
+
+	FILE* stream = open_memstream(&buffer, &size);
+
+	fflush(stream);
+
+	return stream;
+	
+
+
+}
 
 
 bool test_ast(FILE* input, FILE* ans, int test_num){
 
+	ast_node_t ast = build_ast(input);
+
+	FILE* text_ast_stream = get_stream(input);
+	print_ast(text_ast_stream, ast);
+	rewind(text_ast_stream);
+
+
 
 	bool test_pass = true;
 
-	char exp_line[MAX_LINE_LENGTH];
+	char input_line[MAX_LINE_LENGTH];
 	char ans_line[MAX_LINE_LENGTH];
 
 
 	int line_num = 1;
+
 	
-	while(fgets(exp_line, MAX_LINE_LENGTH, input) && fgets(ans_line, MAX_LINE_LENGTH, ans)){
-			
+	while(fgets(input_line, MAX_LINE_LENGTH, text_ast_stream) && fgets(ans_line, MAX_LINE_LENGTH, ans)){
+		
+		//TODO:	
+		//add thing like tests 1..20 dont work. not 20 lines
+		//if 1 ends before other unqiue message
 			
 
-		if(strncmp(exp_line, ans_line, MAX_LINE_LENGTH) != 0){
+		if(strncmp(input_line, ans_line, MAX_LINE_LENGTH) != 0){
 
 			printf("Expected AST string representation did not match actual on line %d.\n", line_num);
 			
@@ -62,9 +91,9 @@ bool test_ast(FILE* input, FILE* ans, int test_num){
 		print_file_line_numbers(ans);
 
 
-		rewind(input);
+		rewind(text_ast_stream);
 		printf("Actual AST string representation:\n");
-		print_file_line_numbers(input);
+		print_file_line_numbers(text_ast_stream);
 
 	}
 	else{
@@ -74,6 +103,8 @@ bool test_ast(FILE* input, FILE* ans, int test_num){
 
 	}
 
+
+	fclose(text_ast_stream);
 
 	return test_pass;
 
