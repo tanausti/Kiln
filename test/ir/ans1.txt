@@ -1,1 +1,5 @@
-hi
+define i32 @main() {
+entry:
+  %sum = add i32 2, 2
+  ret i32 %sum
+}

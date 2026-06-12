@@ -13,7 +13,7 @@ int main(){
 
 
 	FILE* input1 = fopen("input1.c", "r");
-	FILE* ans1 = fopen("ans1.txt", "r");
+	FILE* ans1 = fopen("ans1.ll", "r");
 	
 	test_llvm(input1, ans1, 1);
 
@@ -32,7 +32,7 @@ bool test_llvm(FILE* input, FILE* ans, int test_num){
 	FILE* text_llvm_stream = init_memstream();
 
 	ast_node_t ast = build_ast(input);
-	print_llvm_to_file(text_llvm_stream, ast);
+	generate_llvm_to_file(text_llvm_stream, ast);
 
 	bool test_pass = true;
 	test_pass = test_pass & test_llvm_length(text_llvm_stream, ans);
