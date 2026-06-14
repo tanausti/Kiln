@@ -14,11 +14,21 @@ int main(){
 
 	FILE* input1 = fopen("input1.c", "r");
 	FILE* ans1 = fopen("ans1.ll", "r");
-	
+	FILE* input2 = fopen("input2.c", "r");
+	FILE* ans2 = fopen("ans2.ll", "r");
+	FILE* input3 = fopen("input3.c", "r");
+	FILE* ans3 = fopen("ans3.ll", "r");
+
 	test_llvm(input1, ans1, 1);
+	test_llvm(input2, ans2, 2);
+	test_llvm(input3, ans3, 3);
 
 	fclose(input1);
 	fclose(ans1);
+	fclose(input2);
+	fclose(ans2);
+	fclose(input3);
+	fclose(ans3);
 
 
 
@@ -29,16 +39,18 @@ int main(){
 
 bool test_llvm(FILE* input, FILE* ans, int test_num){
 
-	FILE* text_llvm_stream = init_memstream();
-
 	ast_node_t ast = build_ast(input);
-	generate_llvm_to_file(text_llvm_stream, ast);
+ 
+	char filename[256];
+	snprintf(filename, sizeof(filename), "test%d.ll", test_num);
+	generate_llvm_to_file(filename, ast);
+	FILE* generated_llvm_file = fopen(filename, "r");
 
 	bool test_pass = true;
-	test_pass = test_pass & test_llvm_length(text_llvm_stream, ans);
-	rewind(text_llvm_stream);
+	test_pass = test_pass & test_llvm_length(generated_llvm_file, ans);
+	rewind(generated_llvm_file);
 	rewind(ans);
-	test_pass = test_pass & test_llvm_contents(text_llvm_stream, ans);
+	test_pass = test_pass & test_llvm_contents(generated_llvm_file, ans);
 
 	if(!test_pass){
 
@@ -51,9 +63,9 @@ bool test_llvm(FILE* input, FILE* ans, int test_num){
 		print_file_with_line_numbers(ans);
 
 
-		rewind(text_llvm_stream);
+		rewind(generated_llvm_file);
 		printf("Actual LLVM:\n");
-		print_file_with_line_numbers(text_llvm_stream);
+		print_file_with_line_numbers(generated_llvm_file);
 
 	}
 	else{
@@ -64,7 +76,7 @@ bool test_llvm(FILE* input, FILE* ans, int test_num){
 	}
 
 
-	fclose(text_llvm_stream);
+	fclose(generated_llvm_file);
 
 	return test_pass;
 
@@ -183,3 +195,6 @@ void print_file_with_line_numbers(FILE* file){
 
 
 }
+
+
+

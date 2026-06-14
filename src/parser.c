@@ -210,15 +210,18 @@ ast_node_t term(token_stack_node_t** curr){
 
 	ast_node_t left = factor(curr);
 
-	left.type = AST_PRIMARY;
-
 	while(match_token(curr, 1, TOK_PLUS)){
 
-		left.type = AST_PRIMARY;
 		char operator = ((*curr)->prev->token->string)[0];
 
-		ast_node_t right = factor(curr);
-		right.type = AST_PRIMARY;
+		ast_node_t right;
+
+		if(peek_token(*curr)->token->type == TOK_SEMI){
+			right = factor(curr);
+		}
+		else{
+			right = term(curr);
+		}
 
 		ast_node_t* rightPtr = malloc(sizeof(right));
 		ast_node_t* leftPtr = malloc(sizeof(left));
@@ -259,6 +262,8 @@ ast_node_t unary(token_stack_node_t** curr){
 ast_node_t primary(token_stack_node_t** curr){
 
 	ast_node_t ast;
+
+	ast = init_primary_node();
 
 	if((*curr)->token->type == TOK_IDENTIFIER){
 

@@ -13,8 +13,11 @@ int main(){
 	
 	FILE* input1 = fopen("input1.c", "r");
 	FILE* ans1 = fopen("ans1.txt", "r");
+	FILE* input2 = fopen("input2.c", "r");
+	FILE* ans2 = fopen("ans2.txt", "r");
 
 	test_ast(input1, ans1, 1);
+	test_ast(input2, ans2, 2);
 
 
 	fclose(input1);

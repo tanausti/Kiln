@@ -5,7 +5,19 @@
 #include "print_ast.h"
 
 
+
+
 void print_ast(FILE* out, ast_node_t ast){
+
+	int indent_level = 0;
+
+	print_ast_child(out, ast, indent_level);
+
+
+}
+
+
+void print_ast_child(FILE* out, ast_node_t ast, int indent_level){
 
 
 
@@ -28,7 +40,7 @@ void print_ast(FILE* out, ast_node_t ast){
 			}
 		case AST_BINARY_EXPRESSION:
 			{
-				print_binary_expression_node(out, ast.as.binary_expression, 5);
+				print_binary_expression_node(out, ast.as.binary_expression, indent_level);
 				break;
 			}
 		case AST_KEYWORD:
@@ -89,7 +101,7 @@ void print_function_list(FILE* out, function_list_t function_list, int indent_le
 	fprintf(out, "+function_list\n");
 
 	for(int i = 0; i < function_list.vector_tree.size; i++){
-		print_ast(out, *function_list.vector_tree.children[i]);
+		print_ast_child(out, *function_list.vector_tree.children[i], 2);
 	}
 
 
@@ -135,7 +147,7 @@ void print_statement_list(FILE* out, statement_list_t statement_list, int indent
 
 	for(int i = 0; i < statement_list.vector_tree.size; i++){
 
-		print_ast(out, *statement_list.vector_tree.children[i]);
+		print_ast_child(out, *statement_list.vector_tree.children[i], indent_level + 1);
 
 	}
 
@@ -150,7 +162,7 @@ void print_statement_node(FILE* out, statement_t statement, int indent_level){
 	fprintf(out, "-statement\n");
 
 	for(int i = 0; i < statement.vector_tree.size; i++){
-		print_ast(out, *statement.vector_tree.children[i]);
+		print_ast_child(out, *statement.vector_tree.children[i], indent_level + 1);
 	}
 
 
@@ -169,8 +181,8 @@ void print_binary_expression_node(FILE* out, binary_expression_t binary_expressi
 	indent(out, indent_level + 1);
 	fprintf(out, "+operator: %c\n", binary_expression.operator);
 
-	print_ast(out, *binary_expression.left);
-	print_ast(out, *binary_expression.right);
+	print_ast_child(out, *binary_expression.left, indent_level + 1);
+	print_ast_child(out, *binary_expression.right, indent_level + 1);
 
 
 }

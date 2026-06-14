@@ -7,6 +7,8 @@
 
 
 void print_ast(FILE* out, ast_node_t ast);
+void print_ast_child(FILE* out, ast_node_t ast, int indent_level);
+
 void indent(FILE* out, int indent_level);
 
 void print_program_node(FILE* out, program_t program, int indent_level);
