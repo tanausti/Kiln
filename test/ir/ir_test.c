@@ -18,10 +18,13 @@ int main(){
 	FILE* ans2 = fopen("ans2.ll", "r");
 	FILE* input3 = fopen("input3.c", "r");
 	FILE* ans3 = fopen("ans3.ll", "r");
+	FILE* input4 = fopen("input4.c", "r");
+	FILE* ans4 = fopen("ans4.ll", "r");
 
 	test_llvm(input1, ans1, 1);
 	test_llvm(input2, ans2, 2);
 	test_llvm(input3, ans3, 3);
+	test_llvm(input4, ans4, 4);
 
 	fclose(input1);
 	fclose(ans1);

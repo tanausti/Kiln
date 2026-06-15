@@ -271,7 +271,11 @@ ast_node_t primary(token_stack_node_t** curr){
 				(peek_token(peek_token(*curr))->token->type) == TOK_RPARENTH){
 
 			ast = init_primary_node();
-			ast.as.primary.as.func_call = (func_call_t){PRIMITIVE_INT, (*curr)->token->string};
+			
+			char* token_string = (*curr)->token->string;
+			char* callee = malloc(sizeof(token_string));
+			strcpy(callee, token_string);
+			ast.as.primary.as.func_call = (func_call_t){PRIMITIVE_INT, callee};
 			pop_token(curr);
 			pop_token(curr);
 

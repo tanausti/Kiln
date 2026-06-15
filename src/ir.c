@@ -6,7 +6,6 @@
 
 
 
-//each function prototype will map to a LLVMValueRef (function)
 
 
 void generate_llvm_to_file(char* filename, ast_node_t ast){
@@ -20,11 +19,11 @@ void generate_llvm_to_file(char* filename, ast_node_t ast){
 	LLVMModuleRef module = LLVMModuleCreateWithNameInContext(filename, context);
 	LLVMTypeRef int_type = LLVMInt32TypeInContext(context);
 
-	llvm_context_t llvm_context = {context, builder, module, int_type};
+	llvm_context_t llvm_context = {context, builder, module, int_type, NULL};
 
 
 	program_t program_node = ast.as.program;
-	program_node_to_llvm(program_node, llvm_context);
+	program_node_to_llvm(program_node, &llvm_context);
 
 
 	char* ir_str = LLVMPrintModuleToString(module);
@@ -38,7 +37,7 @@ void generate_llvm_to_file(char* filename, ast_node_t ast){
 
 
 
-void program_node_to_llvm(program_t program_node, llvm_context_t llvm_context){
+void program_node_to_llvm(program_t program_node, llvm_context_t* llvm_context){
 
 	function_list_t function_list = program_node.function_list;
 	function_list_to_llvm(function_list, llvm_context);
@@ -47,7 +46,7 @@ void program_node_to_llvm(program_t program_node, llvm_context_t llvm_context){
 }
 
 
-void function_list_to_llvm(function_list_t function_list, llvm_context_t llvm_context){
+void function_list_to_llvm(function_list_t function_list, llvm_context_t* llvm_context){
 
 	
 	for(int i = 0; i < function_list.vector_tree.size; i++){
@@ -62,7 +61,7 @@ void function_list_to_llvm(function_list_t function_list, llvm_context_t llvm_co
 
 
 
-void function_node_to_llvm(function_t function_node, llvm_context_t llvm_context){
+void function_node_to_llvm(function_t function_node, llvm_context_t* llvm_context){
 
 
 	function_prototype_t function_prototype = function_node.function_prototype;
@@ -72,21 +71,23 @@ void function_node_to_llvm(function_t function_node, llvm_context_t llvm_context
 	switch(function_prototype.primitive_type){
 
 		case PRIMITIVE_INT:
-			function_type = LLVMFunctionType(llvm_context.int_type, NULL, 0, 0);
+			function_type = LLVMFunctionType(llvm_context->int_type, NULL, 0, 0);
 			break;
 		default:
-			function_type = LLVMFunctionType(llvm_context.int_type, NULL, 0, 0);
+			function_type = LLVMFunctionType(llvm_context->int_type, NULL, 0, 0);
 			break;
 
 	}
 
 	char* function_name = function_prototype.function_name;
 
-	LLVMValueRef function = LLVMAddFunction(llvm_context.module, function_name, function_type);
+	LLVMValueRef function = LLVMAddFunction(llvm_context->module, function_name, function_type);
+
+	append_function_ll_node(function, llvm_context);
 
 
-	LLVMBasicBlockRef current_entry = LLVMAppendBasicBlockInContext(llvm_context.context, function, "entry");
-	LLVMPositionBuilderAtEnd(llvm_context.builder, current_entry);
+	LLVMBasicBlockRef current_entry = LLVMAppendBasicBlockInContext(llvm_context->context, function, "entry");
+	LLVMPositionBuilderAtEnd(llvm_context->builder, current_entry);
 	
 
 
@@ -97,7 +98,37 @@ void function_node_to_llvm(function_t function_node, llvm_context_t llvm_context
 }
 
 
-void statement_list_to_llvm(statement_list_t statement_list, llvm_context_t llvm_context, LLVMBasicBlockRef current_entry){
+
+//add free ll func
+bool append_function_ll_node(LLVMValueRef function, llvm_context_t* llvm_context){
+
+	function_ll_node_t* head = llvm_context->function_ll_head;
+
+	if(head == NULL){
+
+		function_ll_node_t head_value = {function, NULL};
+		llvm_context->function_ll_head = malloc(sizeof(head_value));
+		*(llvm_context->function_ll_head) = head_value;
+
+	}
+	else if(head->next == NULL){
+
+		function_ll_node_t next_value = {function, NULL};
+		head->next = malloc(sizeof(next_value));
+		*(head->next) = next_value;
+
+	}
+	else{
+		return false;
+	}
+
+	return true;
+
+
+}
+
+
+void statement_list_to_llvm(statement_list_t statement_list, llvm_context_t* llvm_context, LLVMBasicBlockRef current_entry){
 
 
 	for(int i = 0; i < statement_list.vector_tree.size; i++){
@@ -114,7 +145,7 @@ void statement_list_to_llvm(statement_list_t statement_list, llvm_context_t llvm
 
 
 
-void statement_node_to_llvm(statement_t statement_node, llvm_context_t llvm_context, LLVMBasicBlockRef current_entry){
+void statement_node_to_llvm(statement_t statement_node, llvm_context_t* llvm_context, LLVMBasicBlockRef current_entry){
 
 
 
@@ -158,8 +189,8 @@ void statement_node_to_llvm(statement_t statement_node, llvm_context_t llvm_cont
 	if(return_expr){
 
 		
-		LLVMPositionBuilderAtEnd(llvm_context.builder, current_entry);
-		LLVMBuildRet(llvm_context.builder, value);
+		LLVMPositionBuilderAtEnd(llvm_context->builder, current_entry);
+		LLVMBuildRet(llvm_context->builder, value);
 
 
 	}	
@@ -172,19 +203,19 @@ void statement_node_to_llvm(statement_t statement_node, llvm_context_t llvm_cont
 
 
 
-LLVMValueRef primary_node_to_llvm(primary_t primary_node, llvm_context_t llvm_context){
+LLVMValueRef primary_node_to_llvm(primary_t primary_node, llvm_context_t* llvm_context){
 
 
 	LLVMValueRef value;
 
 	if(primary_node.type == PRIMARY_LITERAL){
 
-		value = LLVMConstInt(LLVMInt32TypeInContext(llvm_context.context), primary_node.as.literal.as.integer, 0);	
+		value = LLVMConstInt(llvm_context->int_type, primary_node.as.literal.as.integer, 0);	
 
 	}
 	else{
 
-		//func_call
+		value = function_call_to_llvm(primary_node.as.func_call, llvm_context);
 
 	}
 
@@ -195,9 +226,55 @@ LLVMValueRef primary_node_to_llvm(primary_t primary_node, llvm_context_t llvm_co
 }
 
 
+LLVMValueRef function_call_to_llvm(func_call_t func_call, llvm_context_t* llvm_context){
 
 
-LLVMValueRef binary_expression_node_to_llvm(binary_expression_t binary_expression_node, llvm_context_t llvm_context){
+	char* callee_name = func_call.callee;
+
+	printf("The name is %s\n", callee_name);
+	primitive_type_t primitive_type = func_call.primitive_type;
+	
+	LLVMValueRef callee_ref = function_from_name(callee_name, llvm_context);
+
+	return callee_ref;
+	
+
+}
+
+
+LLVMValueRef function_from_name(char* desired_name, llvm_context_t* llvm_context){
+
+	function_ll_node_t* curr = llvm_context->function_ll_head;
+
+
+	while(curr->next != NULL){
+
+		char* curr_name = LLVMGetValueName(curr->function);
+
+		if(strcmp(desired_name, curr_name) == 0){
+
+			LLVMValueRef function = curr->function;
+
+			//pass in the type dont search for it
+			LLVMValueRef result = LLVMBuildCall2(llvm_context->builder, LLVMGlobalGetValueType(function), function, NULL, 0, "calltmp");
+
+			return result;
+
+		}
+
+		curr = curr->next;
+
+	}
+
+	printf("No function matches desired name: %s\n", desired_name);
+
+
+}
+
+
+
+
+LLVMValueRef binary_expression_node_to_llvm(binary_expression_t binary_expression_node, llvm_context_t* llvm_context){
 
 	LLVMValueRef value;
 
@@ -208,8 +285,6 @@ LLVMValueRef binary_expression_node_to_llvm(binary_expression_t binary_expressio
 		primary_t primary_node = binary_expression_node.left->as.primary;
 
 		left = primary_node_to_llvm(primary_node, llvm_context);
-
-		printf("left is: %d\n", primary_node.as.literal.as.integer);
 
 	}
 
@@ -233,7 +308,7 @@ LLVMValueRef binary_expression_node_to_llvm(binary_expression_t binary_expressio
 
 
 	if(binary_expression_node.operator == '+'){
-		value = LLVMBuildAdd(llvm_context.builder, left, right, "sum");
+		value = LLVMBuildAdd(llvm_context->builder, left, right, "sum");
 	}
 
 	return value;
