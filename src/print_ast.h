@@ -22,6 +22,8 @@ void print_keyword_node(FILE* out, keyword_t keyword, int indent_level);
 void print_primary_node(FILE* out, primary_t primary, int indent_level);
 void print_literal(FILE* out, literal_t literal, int indent_level);
 void print_func_call(FILE* out, func_call_t func_call, int indent_level);
+void print_variable(FILE* out, variable_t variable, int indent_level);
+void print_variable(FILE* out, variable_t variable, int indent_level);
 void print_primitive_type(FILE* out, primitive_type_t primitive_type, int indent_level);
 
 

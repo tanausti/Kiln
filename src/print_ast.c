@@ -25,17 +25,17 @@ void print_ast_child(FILE* out, ast_node_t ast, int indent_level){
 
 		case AST_PROGRAM:
 			{
-				print_program_node(out, ast.as.program, 0);
+				print_program_node(out, ast.as.program, indent_level);
 				break;
 			}
 		case AST_FUNCTION:
 			{
-				print_function_node(out, ast.as.function, 2);	
+				print_function_node(out, ast.as.function, indent_level);	
 				break;
 			}
 		case AST_STATEMENT:
 			{
-				print_statement_node(out, ast.as.statement, 4);
+				print_statement_node(out, ast.as.statement, indent_level);
 				break;
 			}
 		case AST_BINARY_EXPRESSION:
@@ -45,12 +45,12 @@ void print_ast_child(FILE* out, ast_node_t ast, int indent_level){
 			}
 		case AST_KEYWORD:
 			{
-				print_keyword_node(out, ast.as.keyword, 5);
+				print_keyword_node(out, ast.as.keyword, indent_level);
 				break;
 			}
 		case AST_PRIMARY:
 			{
-				print_primary_node(out, ast.as.primary, 6);
+				print_primary_node(out, ast.as.primary, indent_level);
 				break;
 			}
 		default:
@@ -101,7 +101,7 @@ void print_function_list(FILE* out, function_list_t function_list, int indent_le
 	fprintf(out, "+function_list\n");
 
 	for(int i = 0; i < function_list.vector_tree.size; i++){
-		print_ast_child(out, *function_list.vector_tree.children[i], 2);
+		print_ast_child(out, *function_list.vector_tree.children[i], indent_level + 1);
 	}
 
 
@@ -171,25 +171,6 @@ void print_statement_node(FILE* out, statement_t statement, int indent_level){
 
 
 
-void print_binary_expression_node(FILE* out, binary_expression_t binary_expression, int indent_level){
-
-	indent(out, indent_level);
-	fprintf(out, "-binary_expression\n");
-
-	print_primitive_type(out, binary_expression.primitive_type, indent_level + 1);
-
-	indent(out, indent_level + 1);
-	fprintf(out, "+operator: %c\n", binary_expression.operator);
-
-	print_ast_child(out, *binary_expression.left, indent_level + 1);
-	print_ast_child(out, *binary_expression.right, indent_level + 1);
-
-
-}
-
-
-
-
 void print_keyword_node(FILE* out, keyword_t keyword, int indent_level){
 
 	indent(out, indent_level);
@@ -217,6 +198,28 @@ void print_keyword_node(FILE* out, keyword_t keyword, int indent_level){
 
 
 
+
+
+void print_binary_expression_node(FILE* out, binary_expression_t binary_expression, int indent_level){
+
+	indent(out, indent_level);
+	fprintf(out, "-binary_expression\n");
+
+	print_primitive_type(out, binary_expression.primitive_type, indent_level + 1);
+
+	indent(out, indent_level + 1);
+	fprintf(out, "+operator: %c\n", binary_expression.operator);
+
+	print_ast_child(out, *binary_expression.left, indent_level + 1);
+	print_ast_child(out, *binary_expression.right, indent_level + 1);
+
+
+}
+
+
+
+
+
 void print_primary_node(FILE* out, primary_t primary, int indent_level){
 
 	indent(out, indent_level);
@@ -235,6 +238,18 @@ void print_primary_node(FILE* out, primary_t primary, int indent_level){
 				print_func_call(out, primary.as.func_call, indent_level + 1);
 				break;
 			}
+		case PRIMARY_VARIABLE:
+			{
+				print_variable(out, primary.as.variable, indent_level + 1);
+				break;
+
+			}
+		default:
+			{
+				fprintf(out, "invalid type");
+				break;
+
+			}
 
 	}
 
@@ -242,7 +257,6 @@ void print_primary_node(FILE* out, primary_t primary, int indent_level){
 
 
 }
-
 
 
 
@@ -273,6 +287,27 @@ void print_func_call(FILE* out, func_call_t func_call, int indent_level){
 
 	indent(out, indent_level + 1);
 	fprintf(out, "+callee: %s\n", func_call.callee);
+
+}
+
+
+
+void print_variable(FILE* out, variable_t variable, int indent_level){
+
+
+
+	indent(out, indent_level);
+
+	fprintf(out, "+variable:\n");
+
+	print_primitive_type(out, variable.primitive_type, indent_level + 1);
+	
+	indent(out, indent_level + 1);
+	fprintf(out, "+variable name: %s\n", variable.name);
+
+
+
+
 
 }
 
