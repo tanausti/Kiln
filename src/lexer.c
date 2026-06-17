@@ -41,6 +41,13 @@ token_t next_token(FILE *cF, pos_t* lc){
 				break;
 			}
 
+		case '=':{
+
+				char* string = strdup("=");
+				return (token_t){TOK_EQ, string, line, column};
+				break;
+			}
+
 		case '(':
 			{
 				char* string = strdup("(");

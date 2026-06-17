@@ -44,4 +44,7 @@ LLVMValueRef function_call_to_llvm(func_call_t func_call, llvm_context_t* llvm_c
 LLVMValueRef function_from_name(char* desired_name, llvm_context_t* llvm_context);
 
 
+
+
+
 #endif

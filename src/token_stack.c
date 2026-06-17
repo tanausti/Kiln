@@ -5,7 +5,6 @@
 
 
 
-//TODO: free tokens after popped
 
 token_stack_node_t* token_stack(FILE* cF, pos_t* lc){
 
@@ -39,6 +38,9 @@ token_stack_node_t* token_stack(FILE* cF, pos_t* lc){
 
 
 }
+
+
+
 
 token_stack_node_t* pop_token(token_stack_node_t** curr){
 

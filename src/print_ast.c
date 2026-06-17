@@ -246,7 +246,7 @@ void print_primary_node(FILE* out, primary_t primary, int indent_level){
 			}
 		default:
 			{
-				fprintf(out, "invalid type");
+				fprintf(out, "Invalid primary type enum. Enum value: %d\n", primary.type);
 				break;
 
 			}

@@ -144,7 +144,7 @@ void statement_list_to_llvm(statement_list_t statement_list, llvm_context_t* llv
 
 
 
-
+//this sucks fix it
 void statement_node_to_llvm(statement_t statement_node, llvm_context_t* llvm_context, LLVMBasicBlockRef current_entry){
 
 
@@ -164,6 +164,9 @@ void statement_node_to_llvm(statement_t statement_node, llvm_context_t* llvm_con
 
 				case KEYW_RETURN:
 					return_expr = true;
+					break;
+				case KEYW_INT:
+					assign_expr = true;
 					break;
 
 			}
@@ -193,7 +196,18 @@ void statement_node_to_llvm(statement_t statement_node, llvm_context_t* llvm_con
 		LLVMBuildRet(llvm_context->builder, value);
 
 
-	}	
+	}
+	/*
+	if(assign_expr){
+
+		LLVMValueRef var = LLVMBuildAlloca(builder, llvm_context->int_type, statement_node.vector_tree.children[1]->left->as.primary.as.variable.name);
+
+		LLVMBuildStore(llvm_context->builder, value, var);
+
+		LLVMValueRef val = LLVMBuildLoad2(llvm_context->builder, llvm_context->int_type, var, statement_node.vector_tree.children[1]->left->as.primary.as.variable.name); 
+
+
+	}*/	
 
 
 

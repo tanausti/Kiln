@@ -126,16 +126,11 @@ statement_list_t statement_list(token_stack_node_t** curr){
 
 	if(!match_token(curr, 1, TOK_RBRACE)){
 
-		ast_node_t statement_var = statement(curr);
-		vec_tree_add_right_child(&statement_list.vector_tree, statement_var);
-
-		while(match_token(curr, 1, TOK_SEMI) && !match_token(curr, 1, TOK_RBRACE)){
-
-			statement_var = statement(curr);
-
+		do{
+			ast_node_t statement_var = statement(curr);
 			vec_tree_add_right_child(&statement_list.vector_tree, statement_var);
-
 		}
+		while(match_token(curr, 1, TOK_SEMI) && !match_token(curr, 1, TOK_RBRACE));
 
 	}
 
@@ -154,25 +149,10 @@ ast_node_t statement(token_stack_node_t** curr){
 
 	while(match_token(curr, 2, TOK_RETURN, TOK_INT_TYPE)){
 
-		ast_node_t keyword_node = init_keyword_node();
-
-		switch(((*curr)->prev->token->type)){
-
-			case TOK_RETURN:
-				keyword_node.as.keyword = KEYW_RETURN;
-				break;
-			case TOK_INT_TYPE:
-				keyword_node.as.keyword = KEYW_INT;
-				break;
-			default:
-				keyword_node.as.keyword = -1;
-				break;
-
-		}
-
-		vec_tree_add_right_child(&statement_node.as.statement.vector_tree, keyword_node);
+		parse_keyword(curr, &statement_node);
 
 	}
+
 
 	ast_node_t expression_var = expression(curr);
 
@@ -183,7 +163,26 @@ ast_node_t statement(token_stack_node_t** curr){
 }
 
 
+void parse_keyword(token_stack_node_t** curr, ast_node_t* statement_node){
 
+	ast_node_t keyword_node = init_keyword_node();
+
+	switch(((*curr)->prev->token->type)){
+
+		case TOK_RETURN:
+			keyword_node.as.keyword = KEYW_RETURN;
+			break;
+		case TOK_INT_TYPE:
+			keyword_node.as.keyword = KEYW_INT;
+			break;
+		default:
+			keyword_node.as.keyword = -1;
+			break;
+
+	}
+
+		vec_tree_add_right_child(&(statement_node->as.statement.vector_tree), keyword_node);
+}
 
 
 ast_node_t expression(token_stack_node_t** curr){
@@ -210,28 +209,9 @@ ast_node_t term(token_stack_node_t** curr){
 
 	ast_node_t left = factor(curr);
 
-	while(match_token(curr, 1, TOK_PLUS)){
+	while(match_token(curr, 2, TOK_PLUS, TOK_EQ)){
 
-		char operator = ((*curr)->prev->token->string)[0];
-
-		ast_node_t right;
-
-		if(peek_token(*curr)->token->type == TOK_SEMI){
-			right = factor(curr);
-		}
-		else{
-			right = term(curr);
-		}
-
-		ast_node_t* rightPtr = malloc(sizeof(right));
-		ast_node_t* leftPtr = malloc(sizeof(left));
-		*leftPtr = left;
-		*rightPtr = right;
-
-		ast_node_t new_left;
-		new_left = init_binary_expression_node();
-		new_left.as.binary_expression = (binary_expression_t){leftPtr, operator, rightPtr, PRIMITIVE_INT};
-		left = new_left;
+		parse_binary_expression(curr, &left);
 
 	}
 
@@ -241,6 +221,34 @@ ast_node_t term(token_stack_node_t** curr){
 
 }
 
+
+
+void parse_binary_expression(token_stack_node_t** curr, ast_node_t* left){
+
+
+	char operator = ((*curr)->prev->token->string)[0];
+
+	ast_node_t right;
+
+	if(peek_token(*curr)->token->type == TOK_SEMI){
+		right = factor(curr);
+	}
+	else{
+		right = term(curr);
+	}
+
+	ast_node_t* right_ptr = malloc(sizeof(right));
+	ast_node_t* left_ptr = malloc(sizeof(*left));
+	*left_ptr = *left;
+	*right_ptr = right;
+
+	ast_node_t new_left;
+	new_left = init_binary_expression_node();
+	new_left.as.binary_expression = (binary_expression_t){left_ptr, operator, right_ptr, PRIMITIVE_INT};
+	*left = new_left;
+
+
+}
 
 
 ast_node_t factor(token_stack_node_t** curr){
@@ -261,21 +269,19 @@ ast_node_t unary(token_stack_node_t** curr){
 
 ast_node_t primary(token_stack_node_t** curr){
 
-	ast_node_t ast;
-
-	ast = init_primary_node();
+	ast_node_t ast = init_primary_node();
+	char* token_string = (*curr)->token->string;
 
 	if((*curr)->token->type == TOK_IDENTIFIER){
+
+		char* identifier_name = malloc(sizeof(token_string));
+		strcpy(identifier_name, token_string);
 
 		if(peek_token(*curr)->token->type == TOK_LPARENTH && 
 				(peek_token(peek_token(*curr))->token->type) == TOK_RPARENTH){
 
-			ast = init_primary_node();
-			
-			char* token_string = (*curr)->token->string;
-			char* callee = malloc(sizeof(token_string));
-			strcpy(callee, token_string);
-			ast.as.primary.as.func_call = (func_call_t){PRIMITIVE_INT, callee};
+			parse_func_call(identifier_name, &ast);
+
 			pop_token(curr);
 			pop_token(curr);
 
@@ -283,20 +289,14 @@ ast_node_t primary(token_stack_node_t** curr){
 		}
 		else{
 
-			//var
+			parse_variable(identifier_name, &ast);
 
 		}
 
 	}
 	else{
 
-		ast.as.primary.type = PRIMARY_LITERAL;
-		char* primary_str = (*curr)->token->string;
-		int value = str_to_int(primary_str);
-
-
-		ast.as.primary.as.literal.primitive_type = PRIMITIVE_INT;
-		ast.as.primary.as.literal.as.integer = value;
+		parse_literal(token_string, &ast);
 
 
 	}
@@ -309,6 +309,35 @@ ast_node_t primary(token_stack_node_t** curr){
 
 
 
+void parse_func_call(char* identifier_name, ast_node_t* ast){
+
+	ast->as.primary.type = PRIMARY_FUNC_CALL;	
+	func_call_t func_call = (func_call_t){PRIMITIVE_INT, identifier_name};
+	ast->as.primary.as.func_call = func_call;
+
+}
+
+void parse_variable(char* identifier_name, ast_node_t* ast){
+
+
+	ast->as.primary.type = PRIMARY_VARIABLE;
+	variable_t variable = (variable_t){PRIMITIVE_INT, identifier_name};
+	ast->as.primary.as.variable = variable;
+
+}
+
+
+void parse_literal(char* token_string, ast_node_t* ast){
+
+
+	ast->as.primary.type = PRIMARY_LITERAL;
+	int value = str_to_int(token_string);
+
+	ast->as.primary.as.literal.primitive_type = PRIMITIVE_INT;
+	ast->as.primary.as.literal.as.integer = value;
+
+
+}
 
 
 
@@ -334,10 +363,6 @@ int match_token(token_stack_node_t** curr, int n, ...){
 
 
 		}
-
-
-
-
 
 	}
 
@@ -415,10 +440,6 @@ int str_to_int(char* str){
 
 
 }
-
-
-
-
 
 
 

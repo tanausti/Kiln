@@ -23,7 +23,9 @@ typedef enum token_type{
 	TOK_RBRACE,
 	TOK_SEMI,
 
-	TOK_UNKNOWN
+	TOK_UNKNOWN,
+
+	TOK_EQ
 
 }token_type_t;
 
