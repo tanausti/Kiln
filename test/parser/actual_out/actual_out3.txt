@@ -6,19 +6,15 @@
 				+function_name: main
 			+statement_list
 				-statement
-					-keyword: return
+					-keyword: int
 					-binary_expression
 						+primitive_type: int
-						+operator: +
+						+operator: =
+						-primary
+							+variable:
+								+primitive_type: int
+								+variable name: x
 						-primary
 							+literal
 								+primitive_type: int
 								+integer: 2
-						-primary
-							+literal
-								+primitive_type: int
-								+integer: 2
-						-primary
-							+literal
-								+primitive_type: int
-								+integer: 3

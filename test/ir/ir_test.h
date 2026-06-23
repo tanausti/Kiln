@@ -5,11 +5,7 @@
 #include <stdio.h>
 #include <stdbool.h>
 
-bool test_llvm(FILE* input, FILE* ans, int test_num);
-FILE* init_memstream();
-bool test_llvm_length(FILE* input, FILE* ans);
-int count_lines(FILE* input);
-bool test_llvm_contents(FILE* input, FILE* ans);
-void print_file_with_line_numbers(FILE* file);
+FILE* ir_get_expected_out(int test_num);
+FILE* ir_get_actual_out(int test_num);
 
 #endif

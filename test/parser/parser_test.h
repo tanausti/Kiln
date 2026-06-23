@@ -7,12 +7,8 @@
 #include <stdbool.h>
 
 
-bool test_ast(FILE* input, FILE* ans, int test_num);
-FILE* get_stream(FILE* input);
-bool test_ast_length(FILE* input, FILE* ans, int test_num);
-int count_lines(FILE* input);
-bool test_ast_contents(FILE* input, FILE* ans, int test_num);
-void print_file_with_line_numbers(FILE* file);
+FILE* parser_get_expected_out(int test_num);
+FILE* parser_get_actual_out(int test_num);
 
 
 #endif
