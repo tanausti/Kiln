@@ -1,7 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <stdbool.h>
 #include "../../src/lexer.h"
 #include "lexer_test.h"
 #include "../compare_files.h"
@@ -45,7 +44,7 @@ FILE* lexer_get_actual_out(int test_num){
 	snprintf(input_filename, sizeof(input_filename), "input/input%d.c", test_num);
 	FILE* input = fopen(input_filename, "r");
 
-	print_tokens(input, actual_out, test_num);
+	print_tokens(input, actual_out);
 	fclose(input);
 
 	return actual_out;
@@ -58,14 +57,14 @@ FILE* lexer_get_actual_out(int test_num){
 
 
 
-void print_tokens(FILE* input, FILE* out, int test_num){
+void print_tokens(FILE* input, FILE* out){
 
 
 	int token_num = 0;
 	pos_t lc = {1, 0};
 
 	token_t current_token;
-	current_token.type = TOK_UNKNOWN;
+	current_token.type = TOK_ERROR;
 
 	while(current_token.type != TOK_EOF){
 
@@ -155,9 +154,9 @@ void assign_enum_str(token_t current_token, char* enum_str){
 				strcpy(enum_str, "TOK_SEMI");			
 				break;
 			}
-		case(TOK_UNKNOWN):
+		case(TOK_ERROR):
 			{
-				strcpy(enum_str, "TOK_UNKNOWN");			
+				strcpy(enum_str, "TOK_ERROR");			
 				break;
 			}
 		default:

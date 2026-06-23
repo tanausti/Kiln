@@ -4,7 +4,8 @@
 #include <ctype.h>
 #include "lexer.h"
 
-#define MAX_TOKEN_LENGTH 128
+#define MAX_CONSTANT_LENGTH 31
+#define MAX_IDENTIFIER_LENGTH 127
 
 
 
@@ -87,8 +88,6 @@ token_t next_token(FILE *cF, pos_t* lc){
 
 
 
-
-
 	if(c >= '0' && c <= '9'){
 
 		return create_constant_token(cF, c, lc);
@@ -101,7 +100,14 @@ token_t next_token(FILE *cF, pos_t* lc){
 
 	}
 
-	return (token_t){TOK_UNKNOWN, "UNKNOWN", line, column};
+
+
+	char* err_string = malloc(2);
+	err_string[0] = c;
+	err_string[1] = '\0';
+	
+	fprintf(stderr, "Error (%d, %d): Invalid token: %s\n", line, column, err_string);
+	return (token_t){TOK_ERROR, err_string, line, column};
 
 
 }
@@ -113,26 +119,24 @@ token_t next_token(FILE *cF, pos_t* lc){
 
 int advance_char(FILE *cF, pos_t* lc){
 
-	int* line = &(lc->line);
-	int* column = &(lc->column);
 
 	int c = fgetc(cF);
 
 	if(c == '\n' && look_ahead(cF) != EOF){
 
-		(*line)++;
-		*column = 0;
+		lc->line++;
+		lc->column = 0;
 
 
 	}
 	else if(c == '\t'){
 
-		(*column) += 7;
+		lc->column += 7;
 	
 	}
 	else{
 
-		(*column)++;
+		lc->column++;
 	}
 
 	return c;
@@ -142,23 +146,42 @@ int advance_char(FILE *cF, pos_t* lc){
 
 
 
+
+
 token_t create_constant_token(FILE *cF, char c, pos_t* lc){
 
-	char constant[MAX_TOKEN_LENGTH] = "";
+	char constant[MAX_CONSTANT_LENGTH + 1] = "";
+	int start_column = lc->column;
 
-	int constant_start_column = lc->column;
-
+	bool exceeded = false;
+	int constant_length = 0;
 
 	//read until end of constant string, append to constant
 	while(look_ahead(cF) >= '0' && look_ahead(cF) <= '9'){
-		
+	
 		char addition_str[2] = {c, '\0'};
-		strcat(constant, addition_str);
+
+		if(constant_length < MAX_CONSTANT_LENGTH){
+
+			strcat(constant, addition_str);
+		}
+		else{
+			exceeded = true;
+			advance_char(cF, lc);
+		}
 
 		c = advance_char(cF, lc);
+		constant_length++;
+
+
 
 	}
 
+	if(exceeded){
+
+		fprintf(stderr, "Error (%d, %d): Constant exceeded maximum length. \n", lc->line, start_column);
+		return (token_t){TOK_ERROR, constant, lc->line, start_column};
+	}
 
 	char addition_str[2] = {c, '\0'};
 	strcat(constant, addition_str);
@@ -167,7 +190,8 @@ token_t create_constant_token(FILE *cF, char c, pos_t* lc){
 
 	char* string = strdup(constant);
 
-	return (token_t){TOK_INT_LITERAL, string, line, constant_start_column};
+
+	return (token_t){TOK_INT_LITERAL, string, line, start_column};
 
 
 
@@ -179,23 +203,40 @@ token_t create_constant_token(FILE *cF, char c, pos_t* lc){
 
 token_t create_keyword_or_identifier_token(FILE *cF, char c, pos_t* lc){
 
-	char word[MAX_TOKEN_LENGTH] = "";
+	char word[MAX_IDENTIFIER_LENGTH + 1] = "";
 
-	int word_start_column = lc->column;
+	int start_column = lc->column;
 
+	bool exceeded = false;
+	int identifier_length = 0;
 
 	//read until end of word, append to word
 	while(isalpha(look_ahead(cF)) || look_ahead(cF) == '_'){
 
-
 		char addition_str[2] = {c, '\0'};
-		strcat(word, addition_str);
+
+		if(identifier_length < MAX_IDENTIFIER_LENGTH){
+
+			strcat(word, addition_str);
+		}
+		else{
+			exceeded = true;
+			advance_char(cF, lc);
+		}
 
 		c = advance_char(cF, lc);
+		identifier_length++;
 
 
 	}
 
+
+	if(exceeded){
+
+		fprintf(stderr, "Error (%d, %d): Identifier exceeded maximum length. \n", lc->line, start_column);
+		return (token_t){TOK_ERROR, word, lc->line, start_column};
+
+	}
 
 	char addition_str[2] = {c, '\0'};
 	strcat(word, addition_str);
@@ -203,27 +244,21 @@ token_t create_keyword_or_identifier_token(FILE *cF, char c, pos_t* lc){
 
 	int line = lc->line;
 
-
 	char* string = strdup(word);
 
 
 	if(strcmp(string, "int") == 0){
 	
-		return (token_t){TOK_INT_TYPE, string, line, word_start_column};
+		return (token_t){TOK_INT_TYPE, string, line, start_column};
 
 	}
 	else if(strcmp(string, "return") == 0){
 
-
-		return (token_t){TOK_RETURN, string, line, word_start_column};
-
-
+		return (token_t){TOK_RETURN, string, line, start_column};
 	}
 	else{
 
-
-		return (token_t){TOK_IDENTIFIER, string, line, word_start_column};
-
+		return (token_t){TOK_IDENTIFIER, string, line, start_column};
 	}
 
 
@@ -241,3 +276,4 @@ int look_ahead(FILE* cF){
 	return c;
 
 }
+

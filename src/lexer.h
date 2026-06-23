@@ -27,7 +27,7 @@ typedef enum token_type{
 	TOK_RBRACE,
 	TOK_SEMI,
 
-	TOK_UNKNOWN
+	TOK_ERROR
 
 }token_type_t;
 
@@ -56,6 +56,7 @@ typedef struct pos{
 token_t next_token(FILE* cF, pos_t* lc);
 int advance_char(FILE *cF, pos_t* lc);
 int look_ahead(FILE *cF);
+token_t create_error_token(FILE* cF, pos_t* lc, int start_column, char* prev_str);
 token_t create_constant_token(FILE* cF, char c, pos_t* lc);
 token_t create_keyword_or_identifier_token(FILE* cF, char c, pos_t* lc);
 
