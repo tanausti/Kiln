@@ -3,6 +3,9 @@
 
 #include <stdio.h>
 
+
+#define MAX_TOKEN_LENGTH 128
+
 typedef enum token_type{
 
 
@@ -14,6 +17,7 @@ typedef enum token_type{
 	TOK_INT_LITERAL,
 
 	TOK_PLUS,
+	TOK_EQ,
 
 	TOK_IDENTIFIER,
 
@@ -23,9 +27,7 @@ typedef enum token_type{
 	TOK_RBRACE,
 	TOK_SEMI,
 
-	TOK_UNKNOWN,
-
-	TOK_EQ
+	TOK_UNKNOWN
 
 }token_type_t;
 
