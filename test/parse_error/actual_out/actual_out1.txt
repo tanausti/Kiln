@@ -1,0 +1,2 @@
+Syntax error (0, 10): expected token '('
+expected primary

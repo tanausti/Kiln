@@ -12,9 +12,9 @@
 #define DEFAULT_NODE_CAPACITY 10000
 
 /*
- * Stop with prev. Only consume/match tokens when you are actually building the ast. Otherwise just peek like in function_list
+ * Stop with prev. Only consume/match tokens when you are actually building the ast. therwise just peek like in function_list
+ * Create a panic function instead of calling consuem 50 times
  * Insert dummy/error nodes where possible (almost all parse errors except catastrophic)
- * Then a panic function for when locla fixes aren't enough (?)
  * */
 
 
@@ -55,9 +55,18 @@ function_list_t function_list(token_stack_node_t** curr){
 	function_list_t function_list;
 	function_list.vector_tree = init_vector_tree();
 
-	while(check_token((*curr), TOK_INT_TYPE)){
+	//move down into funciton, only peek type + identifer + (
+	while(match_token(curr, 1, TOK_INT_TYPE)){
+
+		//build the function prototype in function, who would have guessed
+		consume_token(curr, TOK_IDENTIFIER, "expected identifier");
+
+		consume_token(curr, TOK_LPARENTH, "expected token '('");
+		consume_token(curr, TOK_RPARENTH, "expected token ')'");
+		consume_token(curr, TOK_LBRACE, "expected token '{'");
 
 		ast_node_t function_node = function(curr);
+
 		vec_tree_add_right_child(&function_list.vector_tree, function_node);
 
 	}
@@ -69,42 +78,11 @@ function_list_t function_list(token_stack_node_t** curr){
 
 ast_node_t function(token_stack_node_t** curr){
 
-	primitive_type_t function_type;
-	char* function_name;
-
-	if(check_token(*curr, TOK_INT_TYPE)){
-		
-		function_type = PRIMITIVE_INT;
-	}
-	else{
-		function_type = -1;
-	}
-
-	consume_token(curr, TOK_INT_TYPE, "function header must include type.");
-
-	if(check_token(*curr, TOK_IDENTIFIER)){
-		
-		char* token_string = (*curr)->token->string;
-		function_name = malloc(strlen(token_string) + 1);
-		strcpy(function_name, token_string);
-	}
-	else{
-		function_name = strdup("ERROR");
-	}
-
-	consume_token(curr, TOK_IDENTIFIER, "expected identifier");
-
-	consume_token(curr, TOK_LPARENTH, "expected token '('");
-	consume_token(curr, TOK_RPARENTH, "expected token ')'");
-	consume_token(curr, TOK_LBRACE, "expected token '{'");
-
-
 
 	ast_node_t function_node = init_function_node();
 
-	function_node.as.function.function_prototype = (function_prototype_t){function_type, function_name};
+	function_node.as.function.function_prototype = function_prototype(curr);
 
-	
 	function_node.as.function.statement_list = statement_list(curr);
 
 	return function_node;
@@ -113,17 +91,57 @@ ast_node_t function(token_stack_node_t** curr){
 }
 
 
+function_prototype_t function_prototype(token_stack_node_t** curr){
+
+	token_stack_node_t* node = *curr;
+
+	while(!check_token(node, TOK_LPARENTH)){
+
+		node = node->prev;
+
+	}
+
+	char* name = node->prev->token->string;
+
+	char* primitive_string = node->prev->prev->token->string;
+
+	primitive_type_t primitive_type;
+
+	
+	switch(primitive_string[0]){
+		case 'i':
+			primitive_type = PRIMITIVE_INT;
+			break;
+		default:
+			primitive_type = -1;
+			break;
+	}
+
+
+	function_prototype_t function_prototype;
+
+	function_prototype.primitive_type = primitive_type;
+	function_prototype.function_name = (char*)strdup(name);
+
+	return function_prototype;
+
+
+}
+
 
 statement_list_t statement_list(token_stack_node_t** curr){
 
 	statement_list_t statement_list;
 	statement_list.vector_tree = init_vector_tree();
 
+	if(!match_token(curr, 1, TOK_RBRACE)){
 
-	while(!match_token(curr, 1, TOK_RBRACE)){
+		do{
+			ast_node_t statement_var = statement(curr);
+			vec_tree_add_right_child(&statement_list.vector_tree, statement_var);
+		}
+		while(match_token(curr, 1, TOK_SEMI) && !match_token(curr, 1, TOK_RBRACE));
 
-		ast_node_t statement_var = statement(curr);
-		vec_tree_add_right_child(&statement_list.vector_tree, statement_var);
 	}
 
 	return statement_list;
@@ -139,14 +157,17 @@ ast_node_t statement(token_stack_node_t** curr){
 	ast_node_t statement_node = init_statement_node();
 	statement_node.as.statement.vector_tree = init_vector_tree();
 
-	//possible keyword, may rename
-	parse_keyword(curr, &statement_node);
+	//again, dont match keywords in statement... do it in keyword
+	while(match_token(curr, 2, TOK_RETURN, TOK_INT_TYPE)){
+
+		parse_keyword(curr, &statement_node);
+
+	}
+
 
 	ast_node_t expression_var = expression(curr);
 
-	vec_tree_add_right_child(&(statement_node.as.statement.vector_tree), expression_var);
-
-	consume_token(curr, TOK_SEMI, "expected semicolon"); 
+	vec_tree_add_right_child(&statement_node.as.statement.vector_tree, expression_var);
 
 	return statement_node;
 
@@ -157,28 +178,21 @@ void parse_keyword(token_stack_node_t** curr, ast_node_t* statement_node){
 
 	ast_node_t keyword_node = init_keyword_node();
 
-	token_type_t token_type = (*curr)->token->type;
+	switch(((*curr)->prev->token->type)){
 
-	if(match_token(curr, 2, TOK_RETURN, TOK_INT_TYPE)){
-
-		switch(token_type){
-
-			case TOK_RETURN:
-				keyword_node.as.keyword = KEYW_RETURN;
-				break;
-			case TOK_INT_TYPE:
-				keyword_node.as.keyword = KEYW_INT;
-				break;
-			default:
-				break;
-
-		}
-
-
-		vec_tree_add_right_child(&(statement_node->as.statement.vector_tree), keyword_node);
+		case TOK_RETURN:
+			keyword_node.as.keyword = KEYW_RETURN;
+			break;
+		case TOK_INT_TYPE:
+			keyword_node.as.keyword = KEYW_INT;
+			break;
+		default:
+			keyword_node.as.keyword = -1;
+			break;
 
 	}
 
+		vec_tree_add_right_child(&(statement_node->as.statement.vector_tree), keyword_node);
 }
 
 
@@ -206,8 +220,12 @@ ast_node_t term(token_stack_node_t** curr){
 
 	ast_node_t left = factor(curr);
 
-	//again, maybe 'potential' binary expression
-	parse_binary_expression(curr, &left);
+	//match it down there not here, or maybe move stuff up here
+	while(match_token(curr, 2, TOK_PLUS, TOK_EQ)){
+
+		parse_binary_expression(curr, &left);
+
+	}
 
 	return left;
 
@@ -220,30 +238,28 @@ ast_node_t term(token_stack_node_t** curr){
 void parse_binary_expression(token_stack_node_t** curr, ast_node_t* left){
 
 
-	char operator = ((*curr)->token->string)[0];
+	char operator = ((*curr)->prev->token->string)[0];
 
-	while(match_token(curr, 2, TOK_PLUS, TOK_EQ)){
+	ast_node_t right;
 
-		ast_node_t right;
-
-		if((check_token(peek_token(*curr), TOK_SEMI))){
-			right = factor(curr);
-		}
-		else{
-			right = term(curr);
-		}
-
-		ast_node_t* right_ptr = malloc(sizeof(right));
-		ast_node_t* left_ptr = malloc(sizeof(*left));
-		*left_ptr = *left;
-		*right_ptr = right;
-
-		ast_node_t new_left;
-		new_left = init_binary_expression_node();
-		new_left.as.binary_expression = (binary_expression_t){left_ptr, operator, right_ptr, PRIMITIVE_INT};
-		*left = new_left;
-
+	
+	if((check_token(*curr, TOK_SEMI))){
+		right = factor(curr);
 	}
+	else{
+		right = term(curr);
+	}
+
+	ast_node_t* right_ptr = malloc(sizeof(right));
+	ast_node_t* left_ptr = malloc(sizeof(*left));
+	*left_ptr = *left;
+	*right_ptr = right;
+
+	ast_node_t new_left;
+	new_left = init_binary_expression_node();
+	new_left.as.binary_expression = (binary_expression_t){left_ptr, operator, right_ptr, PRIMITIVE_INT};
+	*left = new_left;
+
 
 }
 
@@ -269,32 +285,35 @@ ast_node_t primary(token_stack_node_t** curr){
 	ast_node_t ast = init_primary_node();
 	char* token_string = (*curr)->token->string;
 
-	if(match_token(curr, 1, TOK_IDENTIFIER)){
+	if(check_token(*curr, TOK_IDENTIFIER)){
 
-		char* identifier_name = malloc(strlen(token_string) + 1);
+		char* identifier_name = malloc(sizeof(token_string));
 		strcpy(identifier_name, token_string);
 
-		if(match_token(curr, 1, TOK_LPARENTH)){
+		if(check_token(peek_token(*curr), TOK_LPARENTH) && check_token(peek_token(peek_token(*curr)), TOK_RPARENTH)){
 
 			parse_func_call(identifier_name, &ast);
-			consume_token(curr, TOK_RPARENTH, "expected token ')' to close expression.");
+
+			advance_token(curr);
+			advance_token(curr);
+
+
 		}
 		else{
 
 			parse_variable(identifier_name, &ast);
+
 		}
 
 	}
-	else if(match_token(curr, 1, TOK_INT_LITERAL)){
+	else{
 
 		parse_literal(token_string, &ast);
-	}
-	else{
-		//panic('expected primary')
-		fprintf(stderr, "expected primary\n");
-		//return error node 
+
+
 	}
 
+	advance_token(curr);	
 
 	return ast;
 

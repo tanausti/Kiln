@@ -220,8 +220,9 @@ void parse_literal(char* token_string, ast_node_t* ast);
 
 int str_to_int(char* str);
 
-int match_token(token_stack_node_t** curr, int n, ...);
-int check_token(token_stack_node_t* curr, token_type_t type);
+bool check_token(token_stack_node_t* curr, token_type_t type);
+bool match_token(token_stack_node_t** curr, int n, ...);
+void consume_token(token_stack_node_t** curr, token_type_t type, char* error_message);
 
 ast_node_t init_program_node();
 ast_node_t init_keyword_node();
