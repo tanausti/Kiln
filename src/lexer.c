@@ -208,14 +208,14 @@ token_t create_keyword_or_identifier_token(FILE *cF, char c, pos_t* lc){
 	int start_column = lc->column;
 
 	bool exceeded = false;
-	int identifier_length = 0;
+	int length = 0;
 
 	//read until end of word, append to word
 	while(isalpha(look_ahead(cF)) || look_ahead(cF) == '_'){
 
 		char addition_str[2] = {c, '\0'};
 
-		if(identifier_length < MAX_IDENTIFIER_LENGTH){
+		if(length < MAX_IDENTIFIER_LENGTH){
 
 			strcat(word, addition_str);
 		}
@@ -224,9 +224,10 @@ token_t create_keyword_or_identifier_token(FILE *cF, char c, pos_t* lc){
 			advance_char(cF, lc);
 		}
 
-		c = advance_char(cF, lc);
-		identifier_length++;
 
+
+		c = advance_char(cF, lc);
+		length++;
 
 	}
 
@@ -242,23 +243,26 @@ token_t create_keyword_or_identifier_token(FILE *cF, char c, pos_t* lc){
 	strcat(word, addition_str);
 
 
-	int line = lc->line;
-
 	char* string = strdup(word);
 
+	if(strcmp(word, "if") == 0){
+		
+		char* string = strdup(word);
+		return (token_t){TOK_IF, string, lc->line, start_column};
 
-	if(strcmp(string, "int") == 0){
+	}
+	else if(strcmp(string, "int") == 0){
 	
-		return (token_t){TOK_INT_TYPE, string, line, start_column};
+		return (token_t){TOK_INT_TYPE, string, lc->line, start_column};
 
 	}
 	else if(strcmp(string, "return") == 0){
 
-		return (token_t){TOK_RETURN, string, line, start_column};
+		return (token_t){TOK_RETURN, string, lc->line, start_column};
 	}
 	else{
 
-		return (token_t){TOK_IDENTIFIER, string, line, start_column};
+		return (token_t){TOK_IDENTIFIER, string, lc->line, start_column};
 	}
 
 
