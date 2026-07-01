@@ -1,0 +1,19 @@
+-program
+	+function_list
+Error node
+Invalid token
+		-function
+			+function_prototype
+				+primitive_type: int
+				+function_name: func
+			+statement_list
+				-statement
+					-keyword: return
+Error node
+Invalid token
+				-statement
+					-keyword: return
+					-primary
+						+literal
+							+primitive_type: int
+							+integer: 2

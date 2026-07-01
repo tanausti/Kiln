@@ -11,22 +11,16 @@
 
 #define DEFAULT_NODE_CAPACITY 10000
 
-/*
- * Stop with prev. Only consume/match tokens when you are actually building the ast. Otherwise just peek like in function_list
- * Insert dummy/error nodes where possible (almost all parse errors except catastrophic)
- * Then a panic function for when locla fixes aren't enough (?)
- * */
 
 
+//pop tokens off the stack and use them to build the AST
 ast_node_t build_ast(FILE* cF){
 
 	pos_t lc = {0,1};
 
 	token_stack_node_t* top_node = token_stack(cF, &lc);
 
-	ast_node_t ast = program(&top_node);
-
-	free_tokens(top_node);
+	ast_node_t ast = parse_program_node(&top_node);
 
 	return ast;
 
@@ -35,12 +29,11 @@ ast_node_t build_ast(FILE* cF){
 
 
 
-
-ast_node_t program(token_stack_node_t** curr){
+ast_node_t parse_program_node(token_stack_node_t** curr){
 
 
 	ast_node_t program_node = init_program_node();
-	program_node.as.program.function_list = function_list(curr);
+	program_node.as.program.function_list = parse_function_list(curr);
 
 	return program_node;
 
@@ -50,14 +43,14 @@ ast_node_t program(token_stack_node_t** curr){
 
 
 
-function_list_t function_list(token_stack_node_t** curr){
+function_list_t parse_function_list(token_stack_node_t** curr){
 
-	function_list_t function_list;
-	function_list.vector_tree = init_vector_tree();
+	function_list_t function_list = (function_list_t){init_vector_tree()};
 
-	while(check_token((*curr), TOK_INT_TYPE)){
 
-		ast_node_t function_node = function(curr);
+	while(!match_token(curr, 1, TOK_EOF) && check_token(curr, TOK_INT_TYPE)){
+
+		ast_node_t function_node = parse_function_node(curr);
 		vec_tree_add_right_child(&function_list.vector_tree, function_node);
 
 	}
@@ -67,12 +60,44 @@ function_list_t function_list(token_stack_node_t** curr){
 }
 
 
-ast_node_t function(token_stack_node_t** curr){
+
+ast_node_t parse_function_node(token_stack_node_t** curr){
+
+	ast_node_t function_node = init_function_node();
+
+	function_prototype_t function_prototype;
+	statement_list_t statement_list;
+
+
+	function_prototype = parse_function_prototype(curr);
+
+
+	consume_token(curr, TOK_LPARENTH, "expected token '('");
+	consume_token(curr, TOK_RPARENTH, "expected token ')'");
+	consume_token(curr, TOK_LBRACE, "expected token '{'");
+	
+
+	statement_list = parse_statement_list(curr);
+
+	
+	if(function_prototype.primitive_type == -1 || (function_prototype.function_name[0] == '\0')){
+		function_node = init_error_node();
+	}
+	else{
+		function_node.as.function = (function_t){function_prototype, statement_list};
+	}
+
+	return function_node;
+
+
+}
+
+function_prototype_t parse_function_prototype(token_stack_node_t** curr){
 
 	primitive_type_t function_type;
 	char* function_name;
 
-	if(check_token(*curr, TOK_INT_TYPE)){
+	if(check_token(curr, TOK_INT_TYPE)){
 		
 		function_type = PRIMITIVE_INT;
 	}
@@ -82,47 +107,35 @@ ast_node_t function(token_stack_node_t** curr){
 
 	consume_token(curr, TOK_INT_TYPE, "function header must include type.");
 
-	if(check_token(*curr, TOK_IDENTIFIER)){
+
+	if(check_token(curr, TOK_IDENTIFIER)){
 		
-		char* token_string = (*curr)->token->string;
-		function_name = malloc(strlen(token_string) + 1);
-		strcpy(function_name, token_string);
+		function_name = strdup((**curr).token->string);
 	}
 	else{
-		function_name = strdup("ERROR");
+		
+		function_name = strdup("");
 	}
 
-	consume_token(curr, TOK_IDENTIFIER, "expected identifier");
 
-	consume_token(curr, TOK_LPARENTH, "expected token '('");
-	consume_token(curr, TOK_RPARENTH, "expected token ')'");
-	consume_token(curr, TOK_LBRACE, "expected token '{'");
+	consume_token(curr, TOK_IDENTIFIER, "expected identifier.");
 
 
+	function_prototype_t function_prototype = (function_prototype_t){function_type, function_name};
 
-	ast_node_t function_node = init_function_node();
-
-	function_node.as.function.function_prototype = (function_prototype_t){function_type, function_name};
-
-	
-	function_node.as.function.statement_list = statement_list(curr);
-
-	return function_node;
-
+	return function_prototype;
 
 }
 
 
 
-statement_list_t statement_list(token_stack_node_t** curr){
+statement_list_t parse_statement_list(token_stack_node_t** curr){
 
-	statement_list_t statement_list;
-	statement_list.vector_tree = init_vector_tree();
+	statement_list_t statement_list = (statement_list_t){init_vector_tree()};
 
+	while(!match_token(curr, 1, TOK_RBRACE) && !check_token(curr, TOK_EOF)){
 
-	while(!match_token(curr, 1, TOK_RBRACE)){
-
-		ast_node_t statement_var = statement(curr);
+		ast_node_t statement_var = parse_statement_node(curr);
 		vec_tree_add_right_child(&statement_list.vector_tree, statement_var);
 	}
 
@@ -134,80 +147,94 @@ statement_list_t statement_list(token_stack_node_t** curr){
 
 
 
-ast_node_t statement(token_stack_node_t** curr){
+ast_node_t parse_statement_node(token_stack_node_t** curr){
 
 	ast_node_t statement_node = init_statement_node();
-	statement_node.as.statement.vector_tree = init_vector_tree();
+	statement_node.as.statement = (statement_t){init_vector_tree()};
+	
+	//added to vector tree based on condition inside function, because there may not be a keyword
+	parse_keyword_node(curr, &statement_node);
 
-	//possible keyword, may rename
-	parse_keyword(curr, &statement_node);
+	ast_node_t expression_node = parse_expression(curr);
+	vec_tree_add_right_child(&(statement_node.as.statement.vector_tree), expression_node);
 
-	ast_node_t expression_var = expression(curr);
 
-	vec_tree_add_right_child(&(statement_node.as.statement.vector_tree), expression_var);
 
-	consume_token(curr, TOK_SEMI, "expected semicolon"); 
+	token_t prev_token = *((*curr)->token);
+
+	consume_token(curr, TOK_SEMI, "expected semicolon");
+
+	if(prev_token.type != TOK_SEMI){
+		synchronize(curr);
+	}	
+
+
 
 	return statement_node;
 
 }
 
 
-void parse_keyword(token_stack_node_t** curr, ast_node_t* statement_node){
+ast_node_t parse_keyword_node(token_stack_node_t** curr, ast_node_t* statement_node){
 
 	ast_node_t keyword_node = init_keyword_node();
 
-	token_type_t token_type = (*curr)->token->type;
+	keyword_t keyword = -1;
+
+	token_type_t token_type = (**curr).token->type;
 
 	if(match_token(curr, 2, TOK_RETURN, TOK_INT_TYPE)){
 
 		switch(token_type){
 
 			case TOK_RETURN:
-				keyword_node.as.keyword = KEYW_RETURN;
+				keyword = KEYW_RETURN;
 				break;
 			case TOK_INT_TYPE:
-				keyword_node.as.keyword = KEYW_INT;
+				keyword = KEYW_INT;
 				break;
 			default:
 				break;
 
 		}
 
+		keyword_node.as.keyword = keyword;
 
 		vec_tree_add_right_child(&(statement_node->as.statement.vector_tree), keyword_node);
 
 	}
 
-}
 
-
-ast_node_t expression(token_stack_node_t** curr){
-
-	return equality(curr);
-}
-
-
-ast_node_t equality(token_stack_node_t** curr){
-
-	return comparison(curr);
+	return keyword_node;
 
 }
 
 
-ast_node_t comparison(token_stack_node_t** curr){
+ast_node_t parse_expression(token_stack_node_t** curr){
 
-	return term(curr);
+	return parse_equality(curr);
+}
+
+
+ast_node_t parse_equality(token_stack_node_t** curr){
+
+	return parse_comparison(curr);
 
 }
 
 
-ast_node_t term(token_stack_node_t** curr){
+ast_node_t parse_comparison(token_stack_node_t** curr){
 
-	ast_node_t left = factor(curr);
+	return parse_term(curr);
 
-	//again, maybe 'potential' binary expression
-	parse_binary_expression(curr, &left);
+}
+
+
+ast_node_t parse_term(token_stack_node_t** curr){
+
+	ast_node_t left = parse_factor(curr);
+
+	parse_binary_expression_node(curr, &left);
 
 	return left;
 
@@ -217,24 +244,26 @@ ast_node_t term(token_stack_node_t** curr){
 
 
 
-void parse_binary_expression(token_stack_node_t** curr, ast_node_t* left){
+void parse_binary_expression_node(token_stack_node_t** curr, ast_node_t* left){
 
-
-	char operator = ((*curr)->token->string)[0];
+	//fix this
+	char operator = ((**curr).token->string)[0];
 
 	while(match_token(curr, 2, TOK_PLUS, TOK_EQ)){
 
 		ast_node_t right;
 
-		if((check_token(peek_token(*curr), TOK_SEMI))){
-			right = factor(curr);
+		token_stack_node_t* next = peek_token_node(curr);
+
+		if(check_token(&next, TOK_SEMI)){
+			right = parse_factor(curr);
 		}
 		else{
-			right = term(curr);
+			right = parse_term(curr);
 		}
 
-		ast_node_t* right_ptr = malloc(sizeof(right));
-		ast_node_t* left_ptr = malloc(sizeof(*left));
+		ast_node_t* right_ptr = malloc(sizeof(ast_node_t));
+		ast_node_t* left_ptr = malloc(sizeof(ast_node_t));
 		*left_ptr = *left;
 		*right_ptr = right;
 
@@ -248,26 +277,29 @@ void parse_binary_expression(token_stack_node_t** curr, ast_node_t* left){
 }
 
 
-ast_node_t factor(token_stack_node_t** curr){
+ast_node_t parse_factor(token_stack_node_t** curr){
 
-	return unary(curr);
-
-
-}
-
-
-ast_node_t unary(token_stack_node_t** curr){
-
-	return primary(curr);
+	return parse_unary(curr);
 
 
 }
 
 
-ast_node_t primary(token_stack_node_t** curr){
+ast_node_t parse_unary(token_stack_node_t** curr){
 
-	ast_node_t ast = init_primary_node();
-	char* token_string = (*curr)->token->string;
+	return parse_primary_node(curr);
+
+
+}
+
+
+ast_node_t parse_primary_node(token_stack_node_t** curr){
+
+	ast_node_t primary_node = init_primary_node();
+	primary_t primary;
+
+
+	char* token_string = (**curr).token->string;
 
 	if(match_token(curr, 1, TOK_IDENTIFIER)){
 
@@ -276,72 +308,93 @@ ast_node_t primary(token_stack_node_t** curr){
 
 		if(match_token(curr, 1, TOK_LPARENTH)){
 
-			parse_func_call(identifier_name, &ast);
+			primary = parse_primary_func_call(identifier_name);
 			consume_token(curr, TOK_RPARENTH, "expected token ')' to close expression.");
 		}
 		else{
 
-			parse_variable(identifier_name, &ast);
+			primary = parse_primary_variable(identifier_name);
 		}
 
 	}
 	else if(match_token(curr, 1, TOK_INT_LITERAL)){
 
-		parse_literal(token_string, &ast);
+		primary = parse_primary_literal(token_string);
 	}
 	else{
-		//panic('expected primary')
-		fprintf(stderr, "expected primary\n");
-		//return error node 
+	
+		primary_node = init_error_node();
+		consume_token(curr, TOK_INT_LITERAL, "expected primary to close expression.");
+		
+		return primary_node;
+
+	}
+
+	primary_node.as.primary = primary;
+
+	return primary_node;
+
+}
+
+
+
+primary_t parse_primary_func_call(char* identifier_name){
+
+	primary_t primary;
+
+	primary_type_t primary_type = PRIMARY_FUNC_CALL;
+	func_call_t func_call = (func_call_t){PRIMITIVE_INT, identifier_name};
+	
+	primary = (primary_t){primary_type, .as.func_call = func_call};
+
+	return primary;
+
+}
+
+primary_t parse_primary_variable(char* identifier_name){
+
+	primary_t primary;
+
+	primary_type_t primary_type = PRIMARY_VARIABLE;
+	variable_t variable = (variable_t){PRIMITIVE_INT, identifier_name};
+
+	primary = (primary_t){primary_type, .as.variable = variable};
+
+	return primary;
+
+}
+
+
+primary_t parse_primary_literal(char* token_string){
+
+	primary_t primary;
+
+	primary_type_t primary_type = PRIMARY_LITERAL;
+
+	literal_t literal;
+	int value = str_to_int(token_string);
+	literal = (literal_t){primary_type, value};
+
+	primary = (primary_t){primary_type, .as.literal = literal};
+
+	return primary;
+
+}
+
+
+
+
+
+bool check_token(token_stack_node_t** curr, token_type_t type){
+
+	if(curr == NULL || *curr == NULL || (*curr)->token == NULL){
+
+		fprintf(stderr, "Internal error: Attempt to dereference null token/token node in check_token. Was EOF popped off token stack?\n");
+		return false;
 	}
 
 
-	return ast;
-
-}
-
-
-
-void parse_func_call(char* identifier_name, ast_node_t* ast){
-
-	ast->as.primary.type = PRIMARY_FUNC_CALL;	
-	func_call_t func_call = (func_call_t){PRIMITIVE_INT, identifier_name};
-	ast->as.primary.as.func_call = func_call;
-
-}
-
-void parse_variable(char* identifier_name, ast_node_t* ast){
-
-
-	ast->as.primary.type = PRIMARY_VARIABLE;
-	variable_t variable = (variable_t){PRIMITIVE_INT, identifier_name};
-	ast->as.primary.as.variable = variable;
-
-}
-
-
-void parse_literal(char* token_string, ast_node_t* ast){
-
-
-	ast->as.primary.type = PRIMARY_LITERAL;
-	int value = str_to_int(token_string);
-
-	ast->as.primary.as.literal.primitive_type = PRIMITIVE_INT;
-	ast->as.primary.as.literal.as.integer = value;
-
-
-}
-
-
-
-
-
-
-
-bool check_token(token_stack_node_t* curr, token_type_t type){
-
-	token_t* curr_token = curr->token;
-
+	token_t* curr_token = (**curr).token;
 	return (curr_token->type == type);
 
 }
@@ -359,15 +412,14 @@ bool match_token(token_stack_node_t** curr, int n, ...){
 
 		token_type_t token_type = va_arg(args, token_type_t);
 
-		if(check_token(*curr, token_type)){
+		if(check_token(curr, token_type)){
 
-			advance_token(curr);
+			pop_token_node(curr);
 			va_end(args);
 			return true;
 
-
-
 		}
+
 
 	}
 
@@ -383,15 +435,14 @@ bool match_token(token_stack_node_t** curr, int n, ...){
 void consume_token(token_stack_node_t** curr, token_type_t type, char* error_message){
 
 
-	if(check_token(*curr, type)){
+	if(check_token(curr, type)){
 
-		advance_token(curr);
+		pop_token_node(curr);
 
 	}
 	else{
 
-		fprintf(stderr, "Syntax error (%d, %d): %s\n", (*curr)->token->line, (*curr)->token->column, error_message);
-
+		fprintf(stderr, "Syntax error (%d, %d): %s\n", (**curr).token->line, (**curr).token->column, error_message);
 
 	}
 
@@ -401,11 +452,44 @@ void consume_token(token_stack_node_t** curr, token_type_t type, char* error_mes
 
 
 
+void synchronize(token_stack_node_t** curr){
+
+
+	if(!check_token(curr, TOK_EOF))
+	{
+		pop_token_node(curr);
+	}
+
+	while(!check_token(curr, TOK_EOF)){
+
+		token_t previous_token = *((**curr).token);
+
+		if(previous_token.type == TOK_SEMI){
+			return;
+		}
+
+
+		switch(peek_token_node(curr)->token->type){
+
+			case TOK_INT_TYPE:
+				return;
+			case TOK_RETURN:
+				return;
+		}
+
+		pop_token_node(curr);
+
+	}
+}
+
+
+
+
 void vec_tree_add_right_child(vector_tree_t* parent_tree, ast_node_t child){
 
 
-	ast_node_t* childPtr = malloc(sizeof(child));
-	*childPtr = child;
+	ast_node_t* child_ptr = malloc(sizeof(child));
+	*child_ptr = child;
 
 	if(parent_tree->children != NULL && parent_tree->size <= parent_tree->capacity){
 
@@ -415,14 +499,14 @@ void vec_tree_add_right_child(vector_tree_t* parent_tree, ast_node_t child){
 
 		parent_tree->children = vec;
 
-		const int size = parent_tree->size;
+		int size = parent_tree->size;
 
-		memcpy(vec + (size - 1), &childPtr, sizeof(ast_node_t*));
+		memcpy(vec + (size - 1), &child_ptr, sizeof(ast_node_t*));
 
 
 	}else{
 
-		printf("not initialized properly\n");
+		fprintf(stderr, "Internal error: Vector tree not initialized properly!\n");
 
 	}
 
@@ -444,7 +528,7 @@ int str_to_int(char* str){
 
 	if(literal_value == 0 && first_digit != '0'){
 
-		fprintf(stderr, "unaccounted token: %c\n", first_digit);
+		fprintf(stderr, "Internal error: Unaccounted token: %c\n", first_digit);
 
 	}
 
@@ -455,7 +539,13 @@ int str_to_int(char* str){
 
 
 
+ast_node_t init_error_node(){
 
+	ast_node_t ast_node;
+	ast_node.type = AST_ERROR;
+	return ast_node;
+
+}
 ast_node_t init_program_node(){
 
 	ast_node_t ast_node;

@@ -1,0 +1,5 @@
+Syntax error (3, 9): expected semicolon
+Syntax error (3, 12): expected primary to close expression.
+Syntax error (3, 12): expected semicolon
+Syntax error (6, 16): expected primary to close expression.
+Syntax error (10, 9): expected semicolon

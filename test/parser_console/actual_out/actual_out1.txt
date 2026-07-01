@@ -1,0 +1,6 @@
+Syntax error (0, 10): expected token '('
+Syntax error (4, 1): expected token '{'
+Syntax error (11, 8): expected token '{'
+Syntax error (17, 8): expected semicolon
+Syntax error (20, 17): expected primary to close expression.
+Syntax error (20, 17): expected semicolon

@@ -17,8 +17,10 @@ typedef struct token_stack_node{
 
 
 token_stack_node_t* token_stack(FILE* cF, pos_t* lc);
-token_stack_node_t* pop_token(token_stack_node_t** curr);
-token_stack_node_t* peek_token(token_stack_node_t* curr);
-void free_tokens(token_stack_node_t* top);
+void pop_token_node(token_stack_node_t** curr);
+token_stack_node_t* peek_token_node(token_stack_node_t** curr);
+
+
+
 
 #endif

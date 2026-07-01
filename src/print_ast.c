@@ -53,6 +53,10 @@ void print_ast_child(FILE* out, ast_node_t ast, int indent_level){
 				print_primary_node(out, ast.as.primary, indent_level);
 				break;
 			}
+		case AST_ERROR:
+			{
+				fprintf(out, "Error node\n");
+			}
 		default:
 			{
 				fprintf(out, "Invalid token\n");

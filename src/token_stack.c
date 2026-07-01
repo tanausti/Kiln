@@ -6,6 +6,8 @@
 
 
 
+
+
 token_stack_node_t* token_stack(FILE* cF, pos_t* lc){
 
 
@@ -32,6 +34,8 @@ token_stack_node_t* token_stack(FILE* cF, pos_t* lc){
 
 	}
 
+	curr->next = NULL;
+
 
 
 	return head;
@@ -42,40 +46,33 @@ token_stack_node_t* token_stack(FILE* cF, pos_t* lc){
 
 
 
-token_stack_node_t* pop_token(token_stack_node_t** curr){
+void pop_token_node(token_stack_node_t** curr){
 
-	token_stack_node_t* node = *curr;
-	*curr = peek_token(*curr);
+	if(curr != NULL && *curr != NULL){
 
-	return node;
+		token_stack_node_t prev = **curr;
+		(*curr) = peek_token_node(curr);
 
-}
-
-
-
-token_stack_node_t* peek_token(token_stack_node_t* curr){
-
-	return curr->next;
-
-
-}
-
-
-
-
-void free_tokens(token_stack_node_t* top){
-
-
-	free(top->token->string);
-	free(top->token);
-
-	if(top->prev != NULL){
-		free_tokens(top->prev);	
 	}
+	else{
 
-	free(top);
+		fprintf(stderr, "Internal error: Attempt to pop nonexistent token node!\n");
+
+	}
+}
 
 
+
+token_stack_node_t* peek_token_node(token_stack_node_t** curr){
+
+	if(curr != NULL && *curr != NULL){
+		return (**curr).next;
+	}
+	else{
+
+		fprintf(stderr, "Internal error: Attempt to peek null token node!\n");	
+		return NULL;
+	}
 
 
 }
