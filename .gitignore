@@ -1,5 +1,9 @@
 *.out
 *.exe
 *.o
+*.swp
+*.c~
+
+TODO.txt
 
 *.dSYM/
