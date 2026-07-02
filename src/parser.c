@@ -135,13 +135,53 @@ statement_list_t parse_statement_list(token_stack_node_t** curr){
 
 	while(!match_token(curr, 1, TOK_RBRACE) && !check_token(curr, TOK_EOF)){
 
-		ast_node_t statement_var = parse_statement_node(curr);
-		vec_tree_add_right_child(&statement_list.vector_tree, statement_var);
+		ast_node_t statement_node;
+
+		if(match_token(curr, 1, TOK_IF)){
+			statement_node = parse_if_statement_node(curr);
+
+		}
+		else{
+
+			statement_node = parse_statement_node(curr);
+
+		}
+
+
+			vec_tree_add_right_child(&statement_list.vector_tree, statement_node);
+		
 	}
 
 	return statement_list;
 
 
+
+}
+
+
+ast_node_t parse_if_statement_node(token_stack_node_t** curr){
+
+	ast_node_t if_statement_node = init_if_statement_node();
+
+	ast_node_t condition_node;
+	statement_list_t then_statement_list;
+
+
+	consume_token(curr, TOK_LPARENTH, "expected '(' before expression.");
+
+	condition_node = parse_expression(curr);
+
+	consume_token(curr, TOK_RPARENTH, "expected ')' before expression.");
+	consume_token(curr, TOK_LBRACE, "expected '{' before if statement body.");
+
+	then_statement_list = parse_statement_list(curr);
+
+	//'}' is matched in parse_statement_list(), so don't consume here
+
+	if_statement_node.as.if_statement = (if_statement_t){malloc(sizeof(condition_node)), then_statement_list};
+	*(if_statement_node.as.if_statement.condition_node) = condition_node;
+
+	return if_statement_node;
 
 }
 
@@ -152,7 +192,7 @@ ast_node_t parse_statement_node(token_stack_node_t** curr){
 	ast_node_t statement_node = init_statement_node();
 	statement_node.as.statement = (statement_t){init_vector_tree()};
 	
-	//added to vector tree based on condition inside function, because there may not be a keyword
+	//added to vector tree inside function based on a condition in the function, because there may not be a keyword
 	parse_keyword_node(curr, &statement_node);
 
 	ast_node_t expression_node = parse_expression(curr);
@@ -162,7 +202,7 @@ ast_node_t parse_statement_node(token_stack_node_t** curr){
 
 	token_t prev_token = *((*curr)->token);
 
-	consume_token(curr, TOK_SEMI, "expected semicolon");
+	consume_token(curr, TOK_SEMI, "expected ';' at end of statement.");
 
 	if(prev_token.type != TOK_SEMI){
 		synchronize(curr);
@@ -183,6 +223,7 @@ ast_node_t parse_keyword_node(token_stack_node_t** curr, ast_node_t* statement_n
 
 	token_type_t token_type = (**curr).token->type;
 
+	//no if, handled in separate function
 	if(match_token(curr, 2, TOK_RETURN, TOK_INT_TYPE)){
 
 		switch(token_type){
@@ -309,7 +350,7 @@ ast_node_t parse_primary_node(token_stack_node_t** curr){
 		if(match_token(curr, 1, TOK_LPARENTH)){
 
 			primary = parse_primary_func_call(identifier_name);
-			consume_token(curr, TOK_RPARENTH, "expected token ')' to close expression.");
+			consume_token(curr, TOK_RPARENTH, "expected ')' to close expression.");
 		}
 		else{
 
@@ -356,6 +397,7 @@ primary_t parse_primary_variable(char* identifier_name){
 	primary_t primary;
 
 	primary_type_t primary_type = PRIMARY_VARIABLE;
+
 	variable_t variable = (variable_t){PRIMITIVE_INT, identifier_name};
 
 	primary = (primary_t){primary_type, .as.variable = variable};
@@ -389,7 +431,7 @@ bool check_token(token_stack_node_t** curr, token_type_t type){
 
 	if(curr == NULL || *curr == NULL || (*curr)->token == NULL){
 
-		fprintf(stderr, "Internal error: Attempt to dereference null token/token node in check_token. Was EOF popped off token stack?\n");
+		fprintf(stderr, "Internal error: Attempt to dereference null token/token node in check_token. Was EOF popped off token stack early?\n");
 		return false;
 	}
 
@@ -570,6 +612,13 @@ ast_node_t init_function_node(){
 
 	ast_node_t ast_node;
 	ast_node.type = AST_FUNCTION;
+	return ast_node;
+
+}
+ast_node_t init_if_statement_node(){
+
+	ast_node_t ast_node;
+	ast_node.type = AST_IF_STATEMENT;
 	return ast_node;
 
 }

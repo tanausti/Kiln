@@ -33,6 +33,12 @@ void print_ast_child(FILE* out, ast_node_t ast, int indent_level){
 				print_function_node(out, ast.as.function, indent_level);	
 				break;
 			}
+
+		case AST_IF_STATEMENT:
+			{
+				print_if_statement_node(out, ast.as.if_statement, indent_level);	
+				break;
+			}
 		case AST_STATEMENT:
 			{
 				print_statement_node(out, ast.as.statement, indent_level);
@@ -56,6 +62,7 @@ void print_ast_child(FILE* out, ast_node_t ast, int indent_level){
 		case AST_ERROR:
 			{
 				fprintf(out, "Error node\n");
+				break;
 			}
 		default:
 			{
@@ -157,6 +164,21 @@ void print_statement_list(FILE* out, statement_list_t statement_list, int indent
 
 
 }
+
+
+
+void print_if_statement_node(FILE* out, if_statement_t if_statement, int indent_level){
+
+	indent(out, indent_level);
+
+	fprintf(out, "-if statement\n");
+
+	print_ast_child(out, *(if_statement.condition_node), indent_level + 1);
+	print_statement_list(out, if_statement.statement_list, indent_level + 1);
+
+
+}
+
 
 
 void print_statement_node(FILE* out, statement_t statement, int indent_level){

@@ -110,6 +110,14 @@ typedef struct statement_list{
 }statement_list_t;
 
 
+typedef struct if_statement{
+
+	ast_node_t* condition_node;
+	statement_list_t statement_list;
+
+}if_statement_t;
+
+
 typedef struct statement{
 
 	vector_tree_t vector_tree;
@@ -128,7 +136,8 @@ typedef struct function{
 typedef enum keyword{
 
 	KEYW_RETURN,
-	KEYW_INT
+	KEYW_INT,
+	KEYW_IF
 
 }keyword_t;
 
@@ -152,6 +161,7 @@ typedef enum ast_node_type{
 	AST_PROGRAM,
 	AST_FUNCTION_LIST,
 	AST_FUNCTION,
+	AST_IF_STATEMENT,
 	AST_STATEMENT,
 	AST_BINARY_EXPRESSION,	
 	AST_KEYWORD,
@@ -168,6 +178,7 @@ typedef struct program{
 }program_t;
 
 
+
 typedef struct ast_node{
 
 
@@ -180,6 +191,8 @@ typedef struct ast_node{
 		function_t function;
 
 		statement_list_t statement_list;
+
+		if_statement_t if_statement;
 
 		statement_t statement;
 
@@ -196,6 +209,7 @@ typedef struct ast_node{
 
 
 
+
 ast_node_t build_ast(FILE* cF);
 void vec_tree_add_right_child(vector_tree_t* parent_tree, ast_node_t child);
 
@@ -204,6 +218,7 @@ function_list_t parse_function_list(token_stack_node_t** curr);
 ast_node_t parse_function_node(token_stack_node_t** curr);
 function_prototype_t parse_function_prototype(token_stack_node_t** curr);
 statement_list_t parse_statement_list(token_stack_node_t** curr);
+ast_node_t parse_if_statement_node(token_stack_node_t** curr);
 ast_node_t parse_statement_node(token_stack_node_t** curr);
 ast_node_t parse_keyword_node(token_stack_node_t** curr, ast_node_t* statement_node);
 ast_node_t parse_expression(token_stack_node_t** curr);
@@ -230,6 +245,7 @@ ast_node_t init_program_node();
 ast_node_t init_keyword_node();
 ast_node_t init_primary_node();
 ast_node_t init_function_node();
+ast_node_t init_if_statement_node();
 ast_node_t init_statement_node();
 ast_node_t init_binary_expression_node();
 vector_tree_t init_vector_tree();
