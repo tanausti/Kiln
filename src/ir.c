@@ -19,7 +19,8 @@ void generate_llvm_to_file(char* filename, ast_node_t ast){
 	LLVMModuleRef module = LLVMModuleCreateWithNameInContext(filename, context);
 	LLVMTypeRef int_type = LLVMInt32TypeInContext(context);
 
-	llvm_context_t llvm_context = {context, builder, module, int_type, NULL, NULL};
+	//.func_ll = etc
+	llvm_context_t llvm_context = {context, builder, module, int_type, 0, NULL, NULL};
 
 
 	program_t program_node = ast.as.program;
@@ -52,7 +53,6 @@ void function_list_to_llvm(function_list_t function_list, llvm_context_t* llvm_c
 	for(int i = 0; i < function_list.vector_tree.size; i++){
 
 		function_t function_node = function_list.vector_tree.children[i]->as.function;
-	
 		function_node_to_llvm(function_node, llvm_context);
 	
 	}
@@ -86,13 +86,13 @@ void function_node_to_llvm(function_t function_node, llvm_context_t* llvm_contex
 	append_function_ll_node(function, llvm_context);
 
 
-	LLVMBasicBlockRef current_entry = LLVMAppendBasicBlockInContext(llvm_context->context, function, "entry");
-	LLVMPositionBuilderAtEnd(llvm_context->builder, current_entry);
+	LLVMBasicBlockRef function_entry = LLVMAppendBasicBlockInContext(llvm_context->context, function, "entry");
+	LLVMPositionBuilderAtEnd(llvm_context->builder, function_entry);
+	llvm_context->current_entry.has_return = false;
+	llvm_context->current_entry.entry = function_entry;
 	
-
-
 	statement_list_t statement_list = function_node.statement_list;
-	statement_list_to_llvm(statement_list, llvm_context, current_entry);
+	statement_list_to_llvm(statement_list, llvm_context);
 
 
 }
@@ -128,13 +128,31 @@ bool append_function_ll_node(LLVMValueRef function, llvm_context_t* llvm_context
 }
 
 
-void statement_list_to_llvm(statement_list_t statement_list, llvm_context_t* llvm_context, LLVMBasicBlockRef current_entry){
+void statement_list_to_llvm(statement_list_t statement_list, llvm_context_t* llvm_context){
 
 
 	for(int i = 0; i < statement_list.vector_tree.size; i++){
 
-		statement_t statement_node = statement_list.vector_tree.children[i]->as.statement;
-		statement_node_to_llvm(statement_node, llvm_context, current_entry);
+		ast_node_t node = *(statement_list.vector_tree.children[i]); 
+
+		if(node.type == AST_IF_STATEMENT){
+
+			if_statement_t if_statement_node = node.as.if_statement;
+			if_statement_node_to_llvm(if_statement_node, llvm_context);
+
+		}
+		else if(node.type == AST_STATEMENT){
+
+			statement_t statement_node = node.as.statement;
+			statement_node_to_llvm(statement_node, llvm_context);
+
+		}
+		else{
+			
+			//TODO
+			//error, maybe dont have this if parse errors guarantee this won't happen
+
+		}
 
 	}
 
@@ -142,16 +160,70 @@ void statement_list_to_llvm(statement_list_t statement_list, llvm_context_t* llv
 }
 
 
+void if_statement_node_to_llvm(if_statement_t if_statement, llvm_context_t* llvm_context){
+		
+	ast_node_t* condition = if_statement.condition_node;
+	LLVMValueRef condition_value;
 
-void statement_node_to_llvm(statement_t statement_node, llvm_context_t* llvm_context, LLVMBasicBlockRef current_entry){
+	if(condition->type == AST_BINARY_EXPRESSION){
 
+		condition_value = binary_expression_node_to_llvm(condition->as.binary_expression, llvm_context);	
+
+	}
+	else if(condition->type == AST_PRIMARY){
+		condition_value = primary_node_to_llvm(condition->as.primary, llvm_context);
+
+	}
+	//TODO add error case
+	
+
+	//"cast" to i1 instead of i32
+	LLVMValueRef boolean = LLVMBuildICmp(llvm_context->builder, LLVMIntNE, condition_value, LLVMConstInt(LLVMInt32Type(), 0, 0), "boolean");
+
+
+	//TODO	
+	//store function, dont lookup, use stored function for other parts
+	LLVMValueRef parent_function = LLVMGetBasicBlockParent(llvm_context->current_entry.entry);
+	LLVMBasicBlockRef then_block = LLVMAppendBasicBlock(parent_function, "then");
+	LLVMBasicBlockRef end_block = LLVMAppendBasicBlock(parent_function, "end");
+
+	//conditional branch, always have with if statement
+	LLVMBuildCondBr(llvm_context->builder, boolean, then_block, end_block);
+
+	//emit into then branch
+	statement_list_t then_statement_list = if_statement.statement_list;
+	LLVMPositionBuilderAtEnd(llvm_context->builder, then_block);
+	statement_list_to_llvm(then_statement_list, llvm_context);
+	LLVMPositionBuilderAtEnd(llvm_context->builder, then_block);
+
+	//don't emit more instructions if already terminated
+	if(!llvm_context->current_entry.has_return){
+		
+		LLVMBuildBr(llvm_context->builder, end_block);
+	}
+
+
+	//emit into end branch (rest of function)
+	LLVMPositionBuilderAtEnd(llvm_context->builder, end_block);
+
+	llvm_context->current_entry.entry = end_block;
+	llvm_context->current_entry.has_return = false;
+	
+
+
+
+}
+
+
+
+void statement_node_to_llvm(statement_t statement_node, llvm_context_t* llvm_context){
 
 	ast_node_t first_child_node = *statement_node.vector_tree.children[0];
-	ast_node_t second_child_node = *statement_node.vector_tree.children[1];
 
 	if(first_child_node.type == AST_KEYWORD){
 
-		keyword_node_to_llvm(first_child_node.as.keyword, second_child_node, llvm_context, current_entry);
+		ast_node_t second_child_node = *statement_node.vector_tree.children[1];
+		keyword_node_to_llvm(first_child_node.as.keyword, second_child_node, llvm_context);
 
 	}
 	else if(first_child_node.type == AST_BINARY_EXPRESSION){
@@ -164,8 +236,8 @@ void statement_node_to_llvm(statement_t statement_node, llvm_context_t* llvm_con
 		LLVMValueRef primary = primary_node_to_llvm(first_child_node.as.primary, llvm_context);
 
 	}	
-
-	
+	//add error case
+	//TODO add error case
 	
 
 
@@ -173,7 +245,7 @@ void statement_node_to_llvm(statement_t statement_node, llvm_context_t* llvm_con
 }
 
 //the second node is passed in as just an ast node as it could be a primary, variable or binary expression
-void keyword_node_to_llvm(keyword_t keyword_node, ast_node_t second_child_node, llvm_context_t* llvm_context, LLVMBasicBlockRef current_entry){
+void keyword_node_to_llvm(keyword_t keyword_node, ast_node_t second_child_node, llvm_context_t* llvm_context){
 
 
 	if(keyword_node == KEYW_INT){
@@ -187,6 +259,8 @@ void keyword_node_to_llvm(keyword_t keyword_node, ast_node_t second_child_node, 
 
 	}
 	if(keyword_node == KEYW_RETURN){
+
+		llvm_context->current_entry.has_return = true;
 
 		LLVMValueRef return_val;
 		if(second_child_node.type == AST_BINARY_EXPRESSION){
@@ -315,11 +389,11 @@ LLVMValueRef primary_node_to_llvm(primary_t primary_node, llvm_context_t* llvm_c
 	}
 	else if(primary_node.type == PRIMARY_VARIABLE){
 
-		value = var_ptr_from_name(primary_node.as.variable.name, llvm_context); 
+		LLVMValueRef ptr = var_ptr_from_name(primary_node.as.variable.name, llvm_context); 
 
-		if(value != NULL){
+		if(ptr != NULL){
 
-			LLVMBuildLoad2(llvm_context->builder, llvm_context->int_type, value, "load_var");
+			value = LLVMBuildLoad2(llvm_context->builder, llvm_context->int_type, ptr, "load_var");
 
 		}
 
@@ -423,20 +497,15 @@ LLVMValueRef binary_expression_node_to_llvm(binary_expression_t binary_expressio
 	}
 	else if(binary_expression_node.operator == '='){
 
+		value = right;
 		char* name = binary_expression_node.left->as.primary.as.variable.name;
 		LLVMValueRef var_ptr = var_ptr_from_name(name, llvm_context);
-		if(var_ptr == NULL){
-			puts("NULL");
-		}
-		else{
-			puts("NOT NULL");
-		}
 
-		LLVMBuildStore(llvm_context->builder, right, var_ptr);
+		LLVMBuildStore(llvm_context->builder, value, var_ptr);
 
 	}
 
-	return value;
 
+	return value;
 
 }

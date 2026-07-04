@@ -1,11 +1,10 @@
 #include <stdio.h>
-#include <stdbool.h>
 #include <string.h>
 #include <stdlib.h>
 #include "../../src/parser.h"
 #include "../../src/ir.h"
 #include "ir_test.h"
-#include "../compare_files.h"
+#include "../test_harness.h"
 
 
 

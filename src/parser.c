@@ -180,9 +180,7 @@ ast_node_t parse_if_statement_node(token_stack_node_t** curr){
 
 	if_statement_node.as.if_statement = (if_statement_t){malloc(sizeof(condition_node)), then_statement_list};
 	*(if_statement_node.as.if_statement.condition_node) = condition_node;
-
 	return if_statement_node;
-
 }
 
 

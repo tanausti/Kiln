@@ -1,7 +1,6 @@
 -program
 	+function_list
 Error node
-Invalid token
 		-function
 			+function_prototype
 				+primitive_type: int
@@ -10,10 +9,3 @@ Invalid token
 				-statement
 					-keyword: return
 Error node
-Invalid token
-				-statement
-					-keyword: return
-					-primary
-						+literal
-							+primitive_type: int
-							+integer: 2
