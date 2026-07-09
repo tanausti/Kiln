@@ -7,11 +7,10 @@ void free_ast(ast_node_t ast){
 	ast_node_t* ast_ptr = malloc(sizeof(ast_node_t));
 	*ast_ptr = ast;
 
-	printf("Type: %d\n", ast_ptr->type);
-
 	free_ast_child(ast_ptr);
 
 }
+
 
 void free_ast_child(ast_node_t* ast){
 	
