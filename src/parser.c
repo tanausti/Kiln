@@ -12,7 +12,6 @@
 #define DEFAULT_NODE_CAPACITY 10000
 
 
-
 //pop tokens off the stack and use them to build the AST
 ast_node_t build_ast(FILE* cF){
 
@@ -28,19 +27,14 @@ ast_node_t build_ast(FILE* cF){
 }
 
 
-
 ast_node_t parse_program_node(token_stack_node_t** curr){
-
 
 	ast_node_t program_node = init_program_node();
 	program_node.as.program.function_list = parse_function_list(curr);
 
 	return program_node;
 
-
 }
-
-
 
 
 function_list_t parse_function_list(token_stack_node_t** curr){
@@ -60,7 +54,6 @@ function_list_t parse_function_list(token_stack_node_t** curr){
 }
 
 
-
 ast_node_t parse_function_node(token_stack_node_t** curr){
 
 	ast_node_t function_node = init_function_node();
@@ -71,20 +64,27 @@ ast_node_t parse_function_node(token_stack_node_t** curr){
 
 	function_prototype = parse_function_prototype(curr);
 
-
 	consume_token(curr, TOK_LPARENTH, "expected token '('");
 	consume_token(curr, TOK_RPARENTH, "expected token ')'");
 	consume_token(curr, TOK_LBRACE, "expected token '{'");
 	
-
-	statement_list = parse_statement_list(curr);
-
 	
-	if(function_prototype.primitive_type == -1 || (function_prototype.function_name[0] == '\0')){
+	if(function_prototype.primitive_type == -1 || function_prototype.function_name == NULL)
+	{
 		function_node = init_error_node();
 	}
-	else{
+	else
+	{
+
+		statement_list = parse_statement_list(curr);
 		function_node.as.function = (function_t){function_prototype, statement_list};
+	
+	}
+
+	while((**curr).next != NULL){
+
+		pop_token_node(curr);
+
 	}
 
 	return function_node;
@@ -92,10 +92,12 @@ ast_node_t parse_function_node(token_stack_node_t** curr){
 
 }
 
+
 function_prototype_t parse_function_prototype(token_stack_node_t** curr){
 
 	primitive_type_t function_type;
 	char* function_name;
+
 
 	if(check_token(curr, TOK_INT_TYPE)){
 		
@@ -114,7 +116,7 @@ function_prototype_t parse_function_prototype(token_stack_node_t** curr){
 	}
 	else{
 		
-		function_name = strdup("");
+		function_name = NULL;
 	}
 
 
@@ -138,6 +140,7 @@ statement_list_t parse_statement_list(token_stack_node_t** curr){
 		ast_node_t statement_node;
 
 		if(match_token(curr, 1, TOK_IF)){
+
 			statement_node = parse_if_statement_node(curr);
 
 		}
@@ -190,13 +193,12 @@ ast_node_t parse_statement_node(token_stack_node_t** curr){
 	ast_node_t statement_node = init_statement_node();
 	statement_node.as.statement = (statement_t){init_vector_tree()};
 	
+
 	//added to vector tree inside function based on a condition in the function, because there may not be a keyword
 	parse_keyword_node(curr, &statement_node);
 
 	ast_node_t expression_node = parse_expression(curr);
 	vec_tree_add_right_child(&(statement_node.as.statement.vector_tree), expression_node);
-
-
 
 	token_t prev_token = *((*curr)->token);
 
@@ -206,8 +208,6 @@ ast_node_t parse_statement_node(token_stack_node_t** curr){
 		synchronize(curr);
 	}	
 
-
-
 	return statement_node;
 
 }
@@ -216,6 +216,7 @@ ast_node_t parse_statement_node(token_stack_node_t** curr){
 ast_node_t parse_keyword_node(token_stack_node_t** curr, ast_node_t* statement_node){
 
 	ast_node_t keyword_node = init_keyword_node();
+
 
 	keyword_t keyword = -1;
 
@@ -242,7 +243,6 @@ ast_node_t parse_keyword_node(token_stack_node_t** curr, ast_node_t* statement_n
 		vec_tree_add_right_child(&(statement_node->as.statement.vector_tree), keyword_node);
 
 	}
-
 
 	return keyword_node;
 
@@ -277,28 +277,30 @@ ast_node_t parse_term(token_stack_node_t** curr){
 
 	return left;
 
-
-
 }
-
 
 
 void parse_binary_expression_node(token_stack_node_t** curr, ast_node_t* left){
 
-	//fix this
 	char operator = ((**curr).token->string)[0];
 
 	while(match_token(curr, 2, TOK_PLUS, TOK_EQ)){
 
 		ast_node_t right;
 
-		token_stack_node_t* next = peek_token_node(curr);
+		token_stack_node_t* one_ahead = peek_token_node(curr);
+		token_stack_node_t* two_ahead = peek_token_node(&one_ahead);
+		token_stack_node_t* three_ahead = peek_token_node(&two_ahead);
 
-		if(check_token(&next, TOK_SEMI)){
+		if(check_token(&one_ahead, TOK_SEMI) || check_token(&two_ahead, TOK_RPARENTH) && check_token(&three_ahead, TOK_RBRACE)){
+
 			right = parse_factor(curr);
+
 		}
 		else{
+
 			right = parse_term(curr);
+
 		}
 
 		ast_node_t* right_ptr = malloc(sizeof(ast_node_t));
@@ -320,14 +322,12 @@ ast_node_t parse_factor(token_stack_node_t** curr){
 
 	return parse_unary(curr);
 
-
 }
 
 
 ast_node_t parse_unary(token_stack_node_t** curr){
 
 	return parse_primary_node(curr);
-
 
 }
 
@@ -340,30 +340,32 @@ ast_node_t parse_primary_node(token_stack_node_t** curr){
 
 	char* token_string = (**curr).token->string;
 
-	if(match_token(curr, 1, TOK_IDENTIFIER)){
+	char* name = malloc(strlen(token_string) + 1);
+	strcpy(name, token_string);
 
-		char* identifier_name = malloc(strlen(token_string) + 1);
-		strcpy(identifier_name, token_string);
+	if(match_token(curr, 1, TOK_IDENTIFIER)){
 
 		if(match_token(curr, 1, TOK_LPARENTH)){
 
-			primary = parse_primary_func_call(identifier_name);
+			primary = parse_primary_func_call(name);
 			consume_token(curr, TOK_RPARENTH, "expected ')' to close expression.");
 		}
 		else{
 
-			primary = parse_primary_variable(identifier_name);
+			primary = parse_primary_variable(name);
 		}
 
 	}
 	else if(match_token(curr, 1, TOK_INT_LITERAL)){
 
-		primary = parse_primary_literal(token_string);
+		primary = parse_primary_literal(name);
+		free(name);
 	}
 	else{
 	
 		primary_node = init_error_node();
 		consume_token(curr, TOK_INT_LITERAL, "expected primary to close expression.");
+		free(name);
 		
 		return primary_node;
 
@@ -422,9 +424,6 @@ primary_t parse_primary_literal(char* token_string){
 }
 
 
-
-
-
 bool check_token(token_stack_node_t** curr, token_type_t type){
 
 	if(curr == NULL || *curr == NULL || (*curr)->token == NULL){
@@ -472,20 +471,19 @@ bool match_token(token_stack_node_t** curr, int n, ...){
 
 }
 
+
 void consume_token(token_stack_node_t** curr, token_type_t type, char* error_message){
 
-
-	if(check_token(curr, type)){
-
-		pop_token_node(curr);
-
-	}
-	else{
+	if(!check_token(curr, type)){
 
 		fprintf(stderr, "Syntax error (%d, %d): %s\n", (**curr).token->line, (**curr).token->column, error_message);
 
 	}
+	else{
 
+		pop_token_node(curr);
+
+	}
 
 }
 
@@ -520,6 +518,8 @@ void synchronize(token_stack_node_t** curr){
 		pop_token_node(curr);
 
 	}
+
+
 }
 
 

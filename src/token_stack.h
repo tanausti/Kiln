@@ -9,7 +9,6 @@
 typedef struct token_stack_node{
 
 	token_t* token;
-	struct token_stack_node* prev;
 	struct token_stack_node* next;
 
 }token_stack_node_t;
@@ -18,6 +17,7 @@ typedef struct token_stack_node{
 
 token_stack_node_t* token_stack(FILE* cF, pos_t* lc);
 void pop_token_node(token_stack_node_t** curr);
+void free_token_stack_node(token_stack_node_t* curr);
 token_stack_node_t* peek_token_node(token_stack_node_t** curr);
 
 
