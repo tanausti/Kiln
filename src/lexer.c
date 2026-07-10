@@ -125,7 +125,7 @@ int advance_char(FILE *cF, pos_t* lc){
 	if(c == '\n' && look_ahead(cF) != EOF){
 
 		lc->line++;
-		lc->column = 0;
+		lc->column = 1;
 
 
 	}
