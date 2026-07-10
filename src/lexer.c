@@ -164,27 +164,32 @@ token_t create_constant_token(FILE *cF, char c, pos_t* lc){
 		if(constant_length < MAX_CONSTANT_LENGTH){
 
 			strcat(constant, addition_str);
+
+			c = advance_char(cF, lc);
+			constant_length++;
+
 		}
 		else{
 			exceeded = true;
 			advance_char(cF, lc);
 		}
 
-		c = advance_char(cF, lc);
-		constant_length++;
 
 
 
 	}
+
+
+	char addition_str[2] = {c, '\0'};
+	strcat(constant, addition_str);
 
 	if(exceeded){
 
 		fprintf(stderr, "Error (%d, %d): Constant exceeded maximum length. \n", lc->line, start_column);
-		return (token_t){TOK_ERROR, constant, lc->line, start_column};
+		return (token_t){TOK_ERROR, strdup(constant), lc->line, start_column};
 	}
 
-	char addition_str[2] = {c, '\0'};
-	strcat(constant, addition_str);
+
 
 	int line = lc->line;
 
@@ -211,13 +216,17 @@ token_t create_keyword_or_identifier_token(FILE *cF, char c, pos_t* lc){
 	int length = 0;
 
 	//read until end of word, append to word
-	while(isalpha(look_ahead(cF)) || look_ahead(cF) == '_'){
+	while(isalpha(look_ahead(cF)) || look_ahead(cF) == '_' || isdigit(look_ahead(cF))){
 
 		char addition_str[2] = {c, '\0'};
 
 		if(length < MAX_IDENTIFIER_LENGTH){
 
 			strcat(word, addition_str);
+
+			c = advance_char(cF, lc);
+			length++;
+
 		}
 		else{
 			exceeded = true;
@@ -225,29 +234,25 @@ token_t create_keyword_or_identifier_token(FILE *cF, char c, pos_t* lc){
 		}
 
 
-
-		c = advance_char(cF, lc);
-		length++;
-
 	}
 
+
+	char addition_str[2] = {c, '\0'};
+	strcat(word, addition_str);
 
 	if(exceeded){
 
 		fprintf(stderr, "Error (%d, %d): Identifier exceeded maximum length. \n", lc->line, start_column);
-		return (token_t){TOK_ERROR, word, lc->line, start_column};
+		return (token_t){TOK_ERROR, strdup(word), lc->line, start_column};
 
 	}
 
-	char addition_str[2] = {c, '\0'};
-	strcat(word, addition_str);
 
 
 	char* string = strdup(word);
 
 	if(strcmp(word, "if") == 0){
 		
-		char* string = strdup(word);
 		return (token_t){TOK_IF, string, lc->line, start_column};
 
 	}
