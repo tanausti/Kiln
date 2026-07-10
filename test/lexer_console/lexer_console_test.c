@@ -66,7 +66,7 @@ void console_output(FILE* input){
 
 
 	int token_num = 0;
-	pos_t lc = {1, 0};
+	pos_t lc = {1, 1};
 
 	token_t current_token;
        	current_token.type = TOK_ERROR;
