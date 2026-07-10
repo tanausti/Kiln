@@ -2,6 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 #include "../../src/parser.h"
+#include "../../src/ast.h"
 #include "../../src/ir.h"
 #include "ir_test.h"
 #include "../test_harness.h"

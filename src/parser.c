@@ -9,6 +9,7 @@
 #include "print_ast.h"
 #include "parser.h"
 #include "free_ast.h"
+#include "ast.h"
 
 #define DEFAULT_NODE_CAPACITY 10000
 
@@ -451,13 +452,11 @@ bool check_token(token_stack_node_t** curr, token_type_t type){
 
 bool match_token(token_stack_node_t** curr, int n, ...){
 
-
 	va_list args;
 	va_start(args, n);
 
 
 	for(int i = 0; i < n; i++){
-
 
 		token_type_t token_type = va_arg(args, token_type_t);
 
@@ -469,15 +468,12 @@ bool match_token(token_stack_node_t** curr, int n, ...){
 
 		}
 
-
 	}
-
 
 
 	va_end(args);
 
 	return false;
-
 
 }
 
@@ -486,7 +482,7 @@ void consume_token(token_stack_node_t** curr, token_type_t type, char* error_mes
 
 	if(!check_token(curr, type)){
 
-		fprintf(stderr, "Syntax error (%d, %d): %s\n", (**curr).token->line , (**curr).token->column, error_message);
+		fprintf(stderr, "Syntax error (%d, %d): %s\n", (**curr).token->line, (**curr).token->column, error_message);
 
 	}
 	else{
@@ -498,10 +494,7 @@ void consume_token(token_stack_node_t** curr, token_type_t type, char* error_mes
 }
 
 
-
-
 void synchronize(token_stack_node_t** curr){
-
 
 	if(!check_token(curr, TOK_EOF))
 	{
@@ -529,10 +522,7 @@ void synchronize(token_stack_node_t** curr){
 
 	}
 
-
 }
-
-
 
 
 void vec_tree_add_right_child(vector_tree_t* parent_tree, ast_node_t child){

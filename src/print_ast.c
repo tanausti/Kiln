@@ -1,7 +1,7 @@
 #include <string.h>
 #include <stdbool.h>
 #include <stdio.h>
-#include "parser.h"
+#include "ast.h"
 #include "print_ast.h"
 
 

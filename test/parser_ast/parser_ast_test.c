@@ -1,4 +1,5 @@
 #include "../../src/parser.h"
+#include "../../src/ast.h"
 #include "../../src/print_ast.h"
 #include "../test_harness.h"
 #include "../../src/free_ast.h"

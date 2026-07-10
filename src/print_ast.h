@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 #include <stdbool.h>
-#include "parser.h"
+#include "ast.h"
 
 
 void print_ast(FILE* out, ast_node_t ast);

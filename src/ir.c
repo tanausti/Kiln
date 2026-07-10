@@ -318,7 +318,7 @@ LLVMValueRef variable_declaration_to_llvm(ast_node_t second_child_node, llvm_con
 	}
 
 	primitive_type_t variable_type = variable.primitive_type;
-	char* var_name = variable.name;
+	char* var_name = strdup(variable.name);
 
 
 	LLVMValueRef llvm_var_ptr = NULL;

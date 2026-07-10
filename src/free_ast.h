@@ -1,6 +1,7 @@
 #ifndef FREE_AST_H
 #define FREE_AST_H
 
+#include "ast.h"
 
 void free_ast(ast_node_t ast);
 void free_ast_child(ast_node_t* ast);
