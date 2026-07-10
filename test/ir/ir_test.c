@@ -1,9 +1,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "../../src/parser.h"
-#include "../../src/ast.h"
-#include "../../src/ir.h"
+#include "../../src/parser/parser.h"
+#include "../../src/parser/ast.h"
+#include "../../src/parser/free_ast.h"
+#include "../../src/ir/ir.h"
 #include "ir_test.h"
 #include "../test_harness.h"
 
@@ -43,13 +44,14 @@ FILE* ir_get_actual_out(int test_num){
 	FILE* input = fopen(input_filename, "r");
 	
 	//these tests only take valid ASTs (no error nodes)
-	//to test how AST with error nodes is handled, see compiler_test
 	ast_node_t ast = build_ast(input);
 	fclose(input);
 
 	char actual_out_filename[256];
 	snprintf(actual_out_filename, sizeof(actual_out_filename), "actual_out/actual_out%d.ll", test_num); 
 	generate_llvm_to_file(actual_out_filename, ast);
+
+	free_ast(ast);
 	FILE* generated_llvm_file = fopen(actual_out_filename, "r");
 	return generated_llvm_file;
 
