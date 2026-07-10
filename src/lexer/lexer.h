@@ -13,6 +13,7 @@ typedef enum token_type{
 
 	TOK_INT_TYPE,
 	TOK_RETURN,
+	TOK_IF,
 
 	TOK_INT_LITERAL,
 

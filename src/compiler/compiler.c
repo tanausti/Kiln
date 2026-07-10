@@ -1,9 +1,11 @@
 #include <stdio.h>
 #include <stdbool.h>
 #include <string.h>
-#include "ir.h"
-#include "parser.h"
-#include "validate_ast.h"
+#include "../ir/ir.h"
+#include "../parser/parser.h"
+#include "../parser/ast.h"
+#include "../parser/validate_ast.h"
+#include "../parser/free_ast.h"
 
 int main(int argc, char* argv[]){
 
@@ -13,7 +15,7 @@ int main(int argc, char* argv[]){
 		return 1;
 
 	}
-	else if(argc > 2){
+	else if(argc > 3){
 
 		fprintf(stderr, "Error: Too many command line arguments! Please provide an input file and optionally an output file name.\n");
 		return 1;
@@ -21,30 +23,32 @@ int main(int argc, char* argv[]){
 	}
 
 
-	char* out_filename;
+	char* output_filename;
 
-	if(argc == 2){
+	if(argc == 3){
 
-		out_filename = argv[2];
+		output_filename = argv[2];
+		strcat(output_filename, ".ll");
 
 	}
 	else{
 
-		out_filename = "out";
+		output_filename = "out.ll";
 	}
 
-	FILE* output = fopen(out_filename, "w");
 
 	
 	
 	int len = strlen(argv[1]);
 
-	if(argv[1][len - 1] != '.' && argv[1][len] != 'c'){
+	
+	if(argv[1][len - 2] != '.' || argv[1][len - 1] != 'c'){
 
 		fprintf(stderr, "Error: Input file must end in "".c"".\n");
 		return 1;
 
 	}
+	
 
 	FILE* input = fopen(argv[1], "r");
 
@@ -52,11 +56,13 @@ int main(int argc, char* argv[]){
 	
 	if(validate_ast(ast)){
 
-		generate_llvm_to_file(out_filename, ast);
+		generate_llvm_to_file(output_filename, ast);
 
 	}
 
+	fclose(input);
+	free_ast(ast);
 	return 0;
 
 
-
+}

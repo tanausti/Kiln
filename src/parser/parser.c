@@ -4,7 +4,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
-#include "lexer.h"
 #include "token_stack.h"
 #include "print_ast.h"
 #include "parser.h"

@@ -1,9 +1,9 @@
 #include <llvm-c/Core.h>
 #include <stdio.h>
 #include <string.h>
-#include "parser.h"
 #include "ir.h"
-#include "free_ast.h"
+#include "../parser/parser.h"
+#include "../parser/free_ast.h"
 
 
 void generate_llvm_to_file(char* filename, ast_node_t ast){
@@ -18,8 +18,6 @@ void generate_llvm_to_file(char* filename, ast_node_t ast){
 
 	program_t program = ast.as.program;
 	program_to_llvm(program, &llvm_context);
-	free_ast(ast);
-
 
 	char* ir_str = LLVMPrintModuleToString(module);
 

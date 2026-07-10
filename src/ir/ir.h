@@ -5,7 +5,7 @@
 
 #include <llvm-c/Core.h>
 #include <stdbool.h>
-#include "ast.h"
+#include "../parser/ast.h"
 
 
 

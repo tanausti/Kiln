@@ -3,7 +3,7 @@
 
 #include <stdio.h>
 #include <stdlib.h>
-#include "lexer.h"
+#include "../lexer/lexer.h"
 
 
 typedef struct token_stack_node{

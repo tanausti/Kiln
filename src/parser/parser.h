@@ -3,7 +3,6 @@
 
 #include <stdio.h>
 #include <ctype.h>
-#include "lexer.h"
 #include "ast.h"
 #include "token_stack.h"
 

@@ -1,6 +1,6 @@
 #include <stdio.h>
 #include <stdlib.h>
-#include "lexer.h"
+#include "../lexer/lexer.h"
 #include "token_stack.h"
 
 
