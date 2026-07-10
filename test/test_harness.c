@@ -2,7 +2,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
-#include "compare_files.h"
+#include "test_harness.h"
 
 
 #define MAX_LINE_LENGTH 1024
