@@ -61,12 +61,12 @@ void print_ast_child(FILE* out, ast_node_t ast, int indent_level){
 			}
 		case AST_ERROR:
 			{
-				fprintf(out, "Error node\n");
+				fprintf(out, "-error_node\n");
 				break;
 			}
 		default:
 			{
-				fprintf(out, "Invalid token\n");
+				fprintf(out, "-invalid_node\n");
 				break;
 			}
 
@@ -171,10 +171,16 @@ void print_if_statement_node(FILE* out, if_statement_t if_statement, int indent_
 
 	indent(out, indent_level);
 
-	fprintf(out, "-if statement\n");
+	fprintf(out, "-if_statement\n");
 
-	print_ast_child(out, *(if_statement.condition_node), indent_level + 1);
-	print_statement_list(out, if_statement.statement_list, indent_level + 1);
+
+	indent(out, indent_level + 1);
+	fprintf(out, "+condition\n");
+	print_ast_child(out, *(if_statement.condition_node), indent_level + 2);
+
+	indent(out, indent_level + 1);
+	fprintf(out, "+body\n");
+	print_statement_list(out, if_statement.statement_list, indent_level + 2);
 
 
 }
@@ -324,7 +330,7 @@ void print_variable(FILE* out, variable_t variable, int indent_level){
 
 	indent(out, indent_level);
 
-	fprintf(out, "+variable:\n");
+	fprintf(out, "+variable\n");
 
 	print_primitive_type(out, variable.primitive_type, indent_level + 1);
 	
