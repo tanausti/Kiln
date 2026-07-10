@@ -4,7 +4,7 @@
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include "../../src/lexer.h"
+#include "../../src/lexer/lexer.h"
 #include "lexer_console_test.h"
 #include "../test_harness.h"
 

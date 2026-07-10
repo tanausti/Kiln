@@ -1,9 +1,9 @@
-#include "../../src/parser.h"
-#include "../../src/ast.h"
-#include "../../src/print_ast.h"
-#include "../test_harness.h"
-#include "../../src/free_ast.h"
+#include "../../src/parser/parser.h"
+#include "../../src/parser/ast.h"
+#include "../../src/parser/print_ast.h"
+#include "../../src/parser/free_ast.h"
 #include "parser_ast_test.h"
+#include "../test_harness.h"
 #include <stdlib.h>
 #include <string.h>
 

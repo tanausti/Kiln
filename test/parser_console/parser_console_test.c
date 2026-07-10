@@ -1,11 +1,11 @@
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <fcntl.h>
 #include <unistd.h>
-#include "../../src/parser.h"
-#include "../../src/free_ast.h"
+#include "../../src/parser/parser.h"
+#include "../../src/parser/ast.h"
+#include "../../src/parser/free_ast.h"
 #include "parser_console_test.h"
 #include "../test_harness.h"
 
