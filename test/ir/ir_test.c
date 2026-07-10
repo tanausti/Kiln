@@ -40,6 +40,9 @@ FILE* ir_get_actual_out(int test_num){
 	char input_filename[256];
 	snprintf(input_filename, sizeof(input_filename), "input/input%d.c", test_num);
 	FILE* input = fopen(input_filename, "r");
+	
+	//these tests only take valid ASTs (no error nodes)
+	//to test how AST with error nodes is handled, see compiler_test
 	ast_node_t ast = build_ast(input);
 	fclose(input);
 
