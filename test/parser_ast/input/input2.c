@@ -1,21 +1,14 @@
-int (
-
-	x = 2
-
-	return 4
+int main(){
 
 
-}
+	if(1){
 
+		return 3;
 
+	}	
 
+	
+	return 4;
 
-int func(){
-
-
-
-	return
-
-	return 2
 
 }

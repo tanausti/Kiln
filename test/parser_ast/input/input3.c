@@ -1,14 +1,30 @@
+int func1(){
+
+	int var1;
+	return var1 = 1;
+
+}
+
+int func2(){
+
+	int var2;
+	return var2 = 2;
+
+}
+
+
 int main(){
 
+	int x = 1;
+	int y = 2;
+	int z = 3;
 
-	if(1){
+	if(x+y+z){
 
-		return 3;
+		return func1();
 
-	}	
+	}
 
-	
-	return 4;
-
+	return func2();
 
 }

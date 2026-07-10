@@ -1,19 +1,27 @@
 -program
 	+function_list
-Error node
-Invalid token
 		-function
 			+function_prototype
 				+primitive_type: int
-				+function_name: func
+				+function_name: main
 			+statement_list
-				-statement
-					-keyword: return
-Error node
-Invalid token
+				-if_statement
+					+condition
+						-primary
+							+literal
+								+primitive_type: int
+								+integer: 1
+					+body
+						+statement_list
+							-statement
+								-keyword: return
+								-primary
+									+literal
+										+primitive_type: int
+										+integer: 3
 				-statement
 					-keyword: return
 					-primary
 						+literal
 							+primitive_type: int
-							+integer: 2
+							+integer: 4
