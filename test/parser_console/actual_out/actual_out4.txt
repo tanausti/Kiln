@@ -1,5 +1,3 @@
-Syntax error (3, 9): expected semicolon
-Syntax error (3, 12): expected primary to close expression.
-Syntax error (3, 12): expected semicolon
-Syntax error (6, 16): expected primary to close expression.
-Syntax error (10, 9): expected semicolon
+Syntax error (4, 13): expected ';' at end of statement.
+Syntax error (7, 18): expected primary to close expression.
+Syntax error (11, 13): expected ';' at end of statement.
