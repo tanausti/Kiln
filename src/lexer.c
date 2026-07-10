@@ -131,7 +131,7 @@ int advance_char(FILE *cF, pos_t* lc){
 	}
 	else if(c == '\t'){
 
-		lc->column += 7;
+		lc->column += 8;
 	
 	}
 	else{
