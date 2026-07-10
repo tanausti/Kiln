@@ -1,2 +1,0 @@
-Error (3, 18): Constant exceeded maximum length. 
-Error (10, 6): Identifier exceeded maximum length. 

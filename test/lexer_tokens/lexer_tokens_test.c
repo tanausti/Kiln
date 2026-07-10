@@ -1,7 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include "../../src/lexer.h"
+#include "../../src/lexer/lexer.h"
 #include "lexer_tokens_test.h"
 #include "../test_harness.h"
 
