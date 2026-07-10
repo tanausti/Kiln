@@ -8,6 +8,7 @@
 #include "token_stack.h"
 #include "print_ast.h"
 #include "parser.h"
+#include "free_ast.h"
 
 #define DEFAULT_NODE_CAPACITY 10000
 
@@ -15,7 +16,7 @@
 //pop tokens off the stack and use them to build the AST
 ast_node_t build_ast(FILE* cF){
 
-	pos_t lc = {0,1};
+	pos_t lc = {1,1};
 
 	token_stack_node_t* top_node = token_stack(cF, &lc);
 
@@ -31,6 +32,7 @@ ast_node_t parse_program_node(token_stack_node_t** curr){
 
 	ast_node_t program_node = init_program_node();
 	program_node.as.program.function_list = parse_function_list(curr);
+
 
 	return program_node;
 
@@ -48,6 +50,7 @@ function_list_t parse_function_list(token_stack_node_t** curr){
 		vec_tree_add_right_child(&function_list.vector_tree, function_node);
 
 	}
+
 
 	return function_list;
 
@@ -67,25 +70,32 @@ ast_node_t parse_function_node(token_stack_node_t** curr){
 	consume_token(curr, TOK_LPARENTH, "expected token '('");
 	consume_token(curr, TOK_RPARENTH, "expected token ')'");
 	consume_token(curr, TOK_LBRACE, "expected token '{'");
-	
+
+	statement_list = parse_statement_list(curr);
 	
 	if(function_prototype.primitive_type == -1 || function_prototype.function_name == NULL)
 	{
 		function_node = init_error_node();
+		
+		token_stack_node_t* next_token_node = peek_token_node(curr);
+		
+		while(check_token(&next_token_node, TOK_LBRACE)){
+
+			pop_token_node(curr);
+
+		}
+
+		free_statement_list(statement_list);
+
 	}
 	else
 	{
 
-		statement_list = parse_statement_list(curr);
 		function_node.as.function = (function_t){function_prototype, statement_list};
 	
 	}
 
-	while((**curr).next != NULL){
-
-		pop_token_node(curr);
-
-	}
+	
 
 	return function_node;
 
@@ -476,7 +486,7 @@ void consume_token(token_stack_node_t** curr, token_type_t type, char* error_mes
 
 	if(!check_token(curr, type)){
 
-		fprintf(stderr, "Syntax error (%d, %d): %s\n", (**curr).token->line, (**curr).token->column, error_message);
+		fprintf(stderr, "Syntax error (%d, %d): %s\n", (**curr).token->line , (**curr).token->column, error_message);
 
 	}
 	else{
